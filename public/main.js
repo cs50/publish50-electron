@@ -8,6 +8,7 @@ const url = require('url');
 const isDev = require('electron-is-dev');
 
 const { rasters } = require('./constants')
+const { ffprobe, ffmpeg } = require('./ffmpeg')
 const images = require('./images')
 
 const Queue = require('bull')
@@ -49,11 +50,11 @@ queue.on('active', (job, jobPromise) => {
 })
 
 queue.on('stalled', (job) => {
-  ipc.send('job stalled', { job: simpleJob(job) })
+  sendToMainWindow('job stalled', { job: simpleJob(job) })
 })
 
 queue.on('progress', (job, progress) => {
-  ipc.send('job progress', { job: simpleJob(job), progress })
+  sendToMainWindow('job progress', { job: simpleJob(job), progress })
 })
 
 queue.on('completed', (job, result) => {
@@ -64,16 +65,16 @@ queue.on('failed', (job, err) => {
   sendToMainWindow('job failed', { job: simpleJob(job), err })
 })
 
-queue.process('resize still', 32, (job) => {
-  return images.resizeStill(job.data)
+ipc.on('get job', async (event, data) => {
+  event.returnValue = await queue.getJob(data.jobId)
 })
 
 ipc.on('get finished jobs', async (event, data) => {
   let completedJobs = (await queue.getCompleted())
-    .sort((a, b) => parseInt(b.id) - parseInt(a.id))
+    .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
 
   let failedJobs = (await queue.getFailed())
-    .sort((a, b) => parseInt(b.id) - parseInt(a.id))
+    .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
 
   let jobs = []
 
@@ -104,6 +105,25 @@ ipc.on('get finished jobs', async (event, data) => {
   event.sender.send('finished jobs', { jobs })
 })
 
+ipc.on('get pending jobs', async (event, data) => {
+  let waitingJobs = (await queue.getWaiting())
+    .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
+
+  const limit = data.limit || waitingJobs.length
+  event.sender.send('pending jobs', { jobs: waitingJobs.slice(0, limit).map(simpleJob) })
+})
+
+ipc.on('get active jobs', async (event, data) => {
+  event.sender.send(
+    'active jobs',
+    { jobs: (await queue.getActive()).sort((a, b) => a.timestamp - b.timestamp) }
+  )
+})
+
+queue.process('resize still', 32, (job) => {
+  return images.resizeStill(job.data)
+})
+
 ipc.on('resize stills', (event, data) => {
   new Set(data.files).forEach((imagePath) => {
     Object.keys(rasters).forEach((raster) => {
@@ -112,9 +132,59 @@ ipc.on('resize stills', (event, data) => {
   })
 })
 
-queue.process('generate thumbnails', (job) => {
-  images.generateThumbnails(job.data)
+queue.process('generate thumbnails', 4, async (job) => {
+  const { videoPath } = job.data
+  const basename = path.basename(videoPath, path.extname(videoPath))
+  const outFolder = path.join(path.dirname(videoPath), '../dist/thumbnails')
+  const stackSize = 12
+  const thumbnailHeight = 90
+  const frequency = 5
+
+  // Calculate thumbnail width in terms of height
+  const { aspectRatio } = await ffprobe(videoPath)
+  const thumbnailWidth = Math.round(thumbnailHeight * aspectRatio)
+  const size = `${thumbnailWidth}x${thumbnailHeight}`
+
+  return new Promise(async (resolve, reject) => {
+    (await ffmpeg(videoPath).thumbnails({
+      videoPath,
+      outFolder,
+      frequency,
+      size
+    }))
+    .on('progress', (progress) => {
+      job.progress(progress.percent)
+      sendToMainWindow('job progress', { job: simpleJob(job), progress })
+    })
+    .on('end', async () => {
+      const stacks = await images.stackThumbnails({
+        thumbnailsFolder: outFolder,
+        stackSize,
+        basename
+      })
+
+      await images.generateVTT({
+        outFile: path.join(path.dirname(outFolder), `${basename}.vtt`),
+        stacks,
+        stackSize,
+        frequency,
+        thumbnailWidth,
+        thumbnailHeight
+      })
+
+      resolve()
+    })
+  })
+
+
 })
+
+ipc.on('generate thumbnails', (event, data) => {
+  new Set(data.files).forEach((videoPath) => {
+    queue.add('generate thumbnails', { videoPath, outFolder: path.join(path.dirname(videoPath), 'thumbnails') })
+  })
+})
+
 
 app.on('ready', createWindow);
 

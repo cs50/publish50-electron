@@ -1,5 +1,5 @@
 const { exec, spawn } = require('child_process')
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const EventEmitter = require('events')
 
@@ -32,33 +32,24 @@ function ffprobe(videoPath) {
 
 function ffmpeg(videoPath) {
   return {
-    async thumbnails(options={}) {
+    async thumbnails(options) {
       const metadata = await ffprobe(videoPath)
-      const msDuration = metadata * 1000000
+      const msDuration = metadata.duration * 1000000
       const emitter = new FfmpegEmitter()
-      const frequency = options.frequency || 5
-      const size = options.size
+      const { frequency, size, outFolder } = options
 
       let filters = `fps=(1/${frequency})`
       if (size)
         filters += `,scale=${size}`
 
-      const outFolder = options.outFolder || path.join(path.dirname(videoPath), 'thumbnails')
+      if (fs.existsSync(outFolder))
+        fs.removeSync(outFolder)
 
-      if (!fs.existsSync(outFolder)) {
-        // TODO use when electron use node 11
-        // fs.mkdirSync(outFolder, { recursive: true })
-        await new Promise((resolve, reject) => {
-          exec(`mkdir --parents ${outFolder}`, (err, stdout, stderr) => {
-            if (err)
-              return reject(err)
+      // TODO use when electron use node 11
+      // fs.mkdirSync(outFolder, { recursive: true })
+      fs.mkdirpSync(outFolder)
 
-            resolve()
-          })
-        })
-      }
-
-      const outFile = options.outFile || `${path.basename(videoPath, path.extname(videoPath))}-single_%d.jpg`
+      const outFile = options.outFile || `%d-${path.basename(videoPath, path.extname(videoPath))}.jpg`
       const destination = path.join(outFolder, outFile)
 
       const args = [

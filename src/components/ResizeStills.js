@@ -3,10 +3,10 @@ import React, { Component } from 'react';
 import DropZone from './DropZone'
 import './ResizeStills.css'
 
-const ipcRenderer = window.require('electron').ipcRenderer
+const ipc = window.require('electron').ipcRenderer
 
 function onSubmit(files) {
-  ipcRenderer.send('resize stills', { files: Array.from(files) })
+  ipc.send('resize stills', { files: Array.from(files) })
 }
 
 class ResizeStills extends Component {
