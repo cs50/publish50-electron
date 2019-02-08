@@ -1,0 +1,115 @@
+import React from 'react'
+
+
+import './DropZone.css'
+import fileUploadIcon from '../assets/images/file_upload.svg'
+import closeIcon from '../assets/images/close.svg'
+
+
+function getInitialState() {
+  return {
+    files: new Set()
+  }
+}
+
+class DropZone extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = getInitialState()
+  }
+
+  addFile(p) {
+    this.setState({
+      files: this.state.files.add(p)
+    })
+  }
+
+  onChange(e) {
+    const files = e.target.files
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].type === this.props.accept)
+        this.addFile(files[i].path)
+    }
+  }
+
+  onDrag(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    e.target.classList.add('drag-enter')
+  }
+
+  onDrop(e) {
+    e.target.classList.remove('drag-enter')
+    const items = e.dataTransfer.items
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && items[i].type=== this.props.accept)
+        this.addFile(items[i].getAsFile().path)
+    }
+  }
+
+  onLeave(e) {
+    e.target.classList.remove('drag-enter')
+  }
+
+  onCancel() {
+    this.setState(getInitialState())
+  }
+
+  onSubmit() {
+    this.props.onSubmit(this.state.files)
+    this.onCancel()
+  }
+
+  render() {
+    return (
+      <div
+        id="dropzone"
+        onDragOver={ this.onDrag.bind(this) }
+        onDragLeave={ this.onLeave.bind(this) }
+        onDrop={ this.onDrop.bind(this) }
+        accept="{ this.props.accept }"
+        className="text-center m-auto"
+      >
+        <img
+          alt="File upload"
+          className="file-upload-icon"
+          src={ fileUploadIcon }
+        />
+        <div className="mt-3">
+          Drag and drop files here or
+          <label className="ml-1 click-here text-primary" htmlFor="files">click here</label>
+        </div>
+        <input
+          id="files"
+          className="d-none"
+          type="file"
+          accept={ this.props.accept }
+          onChange={ this.onChange.bind(this) }
+          multiple
+        />
+
+        {
+          this.state.files.size > 0 &&
+          <div className="mt-5">
+            <span>{ this.state.files.size } files selected</span>
+            <img
+              alt="Cancel"
+              className="ml-1 close-icon"
+              src={ closeIcon }
+              onClick={ this.onCancel.bind(this) }
+            />
+            <button
+              className="btn btn-primary d-block mt-2 mx-auto"
+              onClick={ this.onSubmit.bind(this) }
+            >
+              { this.props.caption }
+            </button>
+          </div>
+        }
+      </div>
+    );
+  }
+}
+
+
+export default DropZone;

@@ -1,0 +1,35 @@
+#dropzone {
+  border: 1px dashed gray;
+  border-radius: 12px;
+  padding: 128px;
+  width: 75%;
+}
+
+#dropzone.drag-enter {
+  opacity: 0.5;
+}
+
+#dropzone.drag-enter * {
+  pointer-events: none;
+}
+
+#dropzone .file-upload-icon {
+  border: 1px dashed gray;
+  border-radius: 12px;
+  opacity: 0.3;
+  padding: 12px;
+  width: 96px;
+}
+
+#dropzone .close-icon {
+  cursor: pointer;
+  opacity: 0.3;
+}
+
+#dropzone .close-icon:hover {
+  opacity: 0.7;
+}
+
+#dropzone .click-here {
+  cursor: pointer;
+}
