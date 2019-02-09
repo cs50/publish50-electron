@@ -17,9 +17,20 @@ const ipc = window.require('electron').ipcRenderer
 function jobDescription(job) {
   switch(job.name) {
     case 'resize still':
-      return <div>Resize '{ truncate(job.data.imagePath) }' to '{ job.data.raster }'</div>
+      return (
+        <div>
+          Resize <span data-toggle="tooltip" data-placement="left" title={ job.data.imagePath }>
+            '{ truncate(job.data.imagePath) }'
+          </span> to '{ job.data.raster }'
+        </div>
+      )
+
     case 'generate thumbnails':
-      return <div>Generate thumbnails for { truncate(job.data.videoPath) }</div>
+      return <div>Generate thumbnails for <span>{ truncate(job.data.videoPath) }</span></div>
+
+    case 'transcode to mp3':
+      return <div>Transcode <span>{ truncate(job.data.videoPath) }</span> to mp3</div>
+
     default:
       return <div>Unknown job</div>
   }
@@ -142,6 +153,7 @@ class Home extends Component {
                 <ul className="list-group">
                   {
                     finishedJobs.map((job) => {
+                      console.log(job)
                       return (
                         <li
                           className={

@@ -132,10 +132,14 @@ ipc.on('resize stills', (event, data) => {
   })
 })
 
+function distFolder(videoPath) {
+  return path.join(path.dirname(videoPath), '../dist')
+}
+
 queue.process('generate thumbnails', 4, async (job) => {
   const { videoPath } = job.data
   const basename = path.basename(videoPath, path.extname(videoPath))
-  const outFolder = path.join(path.dirname(videoPath), '../dist/thumbnails')
+  const outFolder = path.join(distFolder(videoPath), 'thumbnails')
   const stackSize = 12
   const thumbnailHeight = 90
   const frequency = 5
@@ -146,13 +150,15 @@ queue.process('generate thumbnails', 4, async (job) => {
   const size = `${thumbnailWidth}x${thumbnailHeight}`
 
   return new Promise(async (resolve, reject) => {
-    (await ffmpeg(videoPath).thumbnails({
+    const job_ = await ffmpeg(videoPath).thumbnails({
       videoPath,
       outFolder,
       frequency,
       size
-    }))
-    .on('progress', (progress) => {
+    })
+
+
+    job_.on('progress', (progress) => {
       job.progress(progress.percent)
       sendToMainWindow('job progress', { job: simpleJob(job), progress })
     })
@@ -175,16 +181,36 @@ queue.process('generate thumbnails', 4, async (job) => {
       resolve()
     })
   })
-
-
 })
 
 ipc.on('generate thumbnails', (event, data) => {
   new Set(data.files).forEach((videoPath) => {
-    queue.add('generate thumbnails', { videoPath, outFolder: path.join(path.dirname(videoPath), 'thumbnails') })
+    queue.add('generate thumbnails', { videoPath })
   })
 })
 
+queue.process('transcode to mp3', 4, async (job) => {
+  const { videoPath } = job.data
+  const basename = path.basename(videoPath, path.extname(videoPath))
+  const outFolder = path.join(distFolder(videoPath))
+  const outFile = path.join(outFolder, `${basename}.mp3`)
+
+  const job_ = await ffmpeg(videoPath).transcode({
+    format: 'mp3',
+    outFile
+  })
+
+  job_.on('progress', (progress) => {
+    job.progress(progress.percent)
+    sendToMainWindow('job progress', { job: simpleJob(job), progress })
+  })
+})
+
+ipc.on('transcode to mp3', (event, data) => {
+  new Set(data.files).forEach((videoPath) => {
+    queue.add('transcode to mp3', { videoPath })
+  })
+})
 
 app.on('ready', createWindow);
 

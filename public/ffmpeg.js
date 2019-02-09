@@ -3,6 +3,8 @@ const fs = require('fs-extra')
 const path = require('path')
 const EventEmitter = require('events')
 
+const { rasters, codecs } = require('./constants')
+
 class FfmpegEmitter extends EventEmitter {}
 
 function ffprobe(videoPath) {
@@ -29,12 +31,37 @@ function ffprobe(videoPath) {
   })
 }
 
+async function ffmpegProgress(videoPath, process, callback) {
+  const metadata = await ffprobe(videoPath)
+  const msDuration = metadata.duration * 1000000
+  let progress = {}
+  let lines = ''
+  process.stdout.on('data', (chunk) => {
+    lines += chunk.toString()
+    if (!lines.endsWith('\n'))
+      return
+
+    lines.split('\n').filter(line => line).forEach(line => {
+      const [ key, val ] = line.split('=')
+      if (key === 'progress') {
+        progress.percent = Math.min(Math.round((progress.out_time_ms * 100 / msDuration)), 100)
+        // emitter.emit('progress', progress)
+        callback(progress)
+        progress = {}
+        return
+      }
+
+      progress[key] = val
+    })
+
+    lines = ''
+  })
+}
 
 function ffmpeg(videoPath) {
   return {
     async thumbnails(options) {
-      const metadata = await ffprobe(videoPath)
-      const msDuration = metadata.duration * 1000000
+
       const emitter = new FfmpegEmitter()
       const { frequency, size, outFolder } = options
 
@@ -62,37 +89,113 @@ function ffmpeg(videoPath) {
       ]
 
       const process = spawn('ffmpeg', args)
-      process.stderr.on('data', (err) => {
-        emitter.emit('error', err)
-      })
+      // process.stderr.on('data', (err) => {
+        // emitter.emit('error', new Error(err))
+      // })
 
-      let progress = {}
-      let lines = ''
-      process.stdout.on('data', (chunk) => {
-        lines += chunk.toString()
-        if (!lines.endsWith('\n'))
-          return
-
-        lines.split('\n').filter(line => line).forEach(line => {
-          const [ key, val ] = line.split('=')
-          if (key === 'progress') {
-            progress.percent = Math.round(progress.out_time_ms * 100 / msDuration)
-            emitter.emit('progress', progress)
-            progress = {}
-            return
-          }
-
-          progress[key] = val
-        })
-
-        lines = ''
-      })
+      ffmpegProgress(videoPath, process, emitter, (progress) => emitter.emit('progress', progress))
 
       process.on('exit', (code, signal) => {
         emitter.emit('end', { code, signal })
       })
 
       return emitter
+    },
+    async transcode(options) {
+      const emitter = new FfmpegEmitter()
+      const { outFile, format } = options
+      let args = [
+        '-nostdin',
+        '-i', videoPath,
+        '-y',
+        '-progress', '-'
+      ]
+
+      let process
+      switch (format) {
+        case 'mp3':
+          args.push(
+            '-vn',
+            '-b:a', '128k',
+            '-ac', '1',
+            outFile
+          )
+
+          process = spawn('ffmpeg', args)
+          // process.stderr.on('data', (err) => {
+            // emitter.emit('error', new Error(err))
+          // })
+
+          ffmpegProgress(videoPath, process, emitter, (progress) => emitter.emit('progress', progress))
+
+          process.on('exit', (code, signal) => {
+            emitter.emit('end', { code, signal })
+          })
+
+          return emitter
+
+        case 'mp4':
+          function progressHandler(progress) {
+
+              // Emit actual progress if doing 1 pass
+              // Emit 50 + (progress / 2) if doing 2 passes
+              progress.percent = 50 * (passes - 1) + Math.min(Math.round(progress.percent / passes), 50)
+              emitter.emit('progress', progress)
+          }
+
+          const { widescreen } = await ffprobe(videoPath)
+          const { raster, passes } = options
+          args.push(
+            '-c:v', codecs.video[format],
+            '-c:a', codecs.audio[format],
+            '-f', format,
+            '-b:v', rasters[raster].videoBitrate[format],
+            '-pix_fmt', 'yuv420p',
+            '-threads', '0',
+            '-passlogfile', path.join('/tmp', path.basename(videoPath)),
+            '-movflags', 'faststart',
+            '-strict', 'experimental',
+            '-profile:v', rasters[raster].profile,
+            '-vf', `scale=${rasters[raster].scale[widescreen ? 'widescreen' : 'standard']}`,
+            '-x264opts', 'keyint=24:min-keyint=24:no-scenecut'
+          )
+
+          new Promise((resolve, reject) => {
+            if (passes < 2)
+              return resolve(false)
+
+            process = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
+            ffmpegProgress(videoPath, process, progressHandler)
+            process.on('exit', (code) => {
+              if (code !== 0)
+                return reject(`ffmpeg exited with exit code ${code}`)
+
+              resolve(true)
+            })
+          })
+          .then((previousPass) => {
+            process = spawn('ffmpeg', [
+              ...args,
+              '-pass', previousPass ? '2' : '1',
+              '-ac', '2',
+              '-b:a', rasters[raster].audioRate,
+              outFile
+            ])
+
+            ffmpegProgress(videoPath, process, progressHandler)
+            process.on('exit', (code) => {
+              if (code !== 0)
+                return Promise.reject(`ffmpeg exited with exit code ${code}`)
+
+              return Promise.resolve()
+            })
+          })
+
+          return emitter
+
+        default:
+          return new Error(`unsupported format ${format}`)
+      }
     }
   }
 }
