@@ -1,17 +1,16 @@
 import React, { Component } from 'react';
 
 import DropZone from './DropZone'
-import './GenerateThumbnails.css'
 
 const ipc = window.require('electron').ipcRenderer
 function onSubmit(files) {
-  ipc.send('generate thumbnails', { files: Array.from(files) })
+  ipc.send('transcode', { files: Array.from(files) })
 }
 
 class GenerateThumbnails extends Component {
   render() {
     return (
-      <div id="dropzone_container" className="text-center">
+      <div className="w-75 mx-auto mt-5">
         <DropZone accept="video/quicktime" caption="Generate" onSubmit={ onSubmit }/>
       </div>
     );

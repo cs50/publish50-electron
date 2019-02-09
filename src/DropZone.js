@@ -2,9 +2,7 @@ import React from 'react'
 
 
 import './DropZone.css'
-import fileUploadIcon from '../assets/images/file_upload.svg'
-import closeIcon from '../assets/images/close.svg'
-
+import fileUploadIcon from './assets/images/file_upload.svg'
 
 function getInitialState() {
   return {
@@ -68,8 +66,7 @@ class DropZone extends React.Component {
         onDragLeave={ this.onLeave.bind(this) }
         onDrop={ this.onDrop.bind(this) }
         accept="{ this.props.accept }"
-        className="text-center m-auto"
-      >
+        className="text-center m-auto p-5">
         <img
           alt="File upload"
           className="file-upload-icon"
@@ -79,6 +76,30 @@ class DropZone extends React.Component {
           Drag and drop files here or
           <label className="ml-1 click-here text-primary" htmlFor="files">click here</label>
         </div>
+
+        {
+          this.state.files.size > 0 &&
+            <div>
+              <div>
+                <span className="selected-files">
+                  { this.state.files.size } file{ this.state.files.size > 1 ? 's' : '' } selected
+                </span>
+
+              </div>
+
+              <div className="mt-5">
+                <button
+                  className="btn btn-primary"
+                  onClick={ this.onSubmit.bind(this) }>
+                  { this.props.caption }
+                </button>
+                <button className="btn btn-danger ml-2" onClick={ this.onCancel.bind(this) }>
+                  Cancel
+                </button>
+              </div>
+            </div>
+        }
+
         <input
           id="files"
           className="d-none"
@@ -87,25 +108,6 @@ class DropZone extends React.Component {
           onChange={ this.onChange.bind(this) }
           multiple
         />
-
-        {
-          this.state.files.size > 0 &&
-          <div className="mt-5">
-            <span>{ this.state.files.size } files selected</span>
-            <img
-              alt="Cancel"
-              className="ml-1 close-icon"
-              src={ closeIcon }
-              onClick={ this.onCancel.bind(this) }
-            />
-            <button
-              className="btn btn-primary d-block mt-2 mx-auto"
-              onClick={ this.onSubmit.bind(this) }
-            >
-              { this.props.caption }
-            </button>
-          </div>
-        }
       </div>
     );
   }

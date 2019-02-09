@@ -30,3 +30,16 @@
     transform: rotate(360deg);
   }
 }
+
+.active {
+  font-weight: bold
+}
+
+.logo {
+  width: 36px;
+  margin-bottom: 2px;
+}
+
+body {
+  padding-top: 64px;
+}

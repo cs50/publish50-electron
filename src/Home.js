@@ -25,11 +25,19 @@ function jobDescription(job) {
         </div>
       )
 
-    case 'generate thumbnails':
-      return <div>Generate thumbnails for <span>{ truncate(job.data.videoPath) }</span></div>
+    case 'transcode':
+      if (job.data.format) {
+        return <div>Transcode <span
+          title={ job.data.videoPath }>
+          { truncate(job.data.videoPath) }
+        </span> to { job.data.format } { job.data.raster && `(${job.data.raster})` }</div>
+      }
 
-    case 'transcode to mp3':
-      return <div>Transcode <span>{ truncate(job.data.videoPath) }</span> to mp3</div>
+      return <div>Generate thumbnails for <span
+        title={ job.data.videoPath }>
+        { truncate(job.data.videoPath) }
+        </span>
+      </div>
 
     default:
       return <div>Unknown job</div>
@@ -59,9 +67,22 @@ class Home extends Component {
     this.setState(initialState)
   }
 
+  jobFinished(job) {
+    const activeJobs = [ ...this.state.active ]
+    const i = activeJobs.findIndex((job_) => job_.id === job.id)
+
+    if (i > -1)
+      activeJobs.splice(i, 1)
+
+    this.setState({
+      active: activeJobs
+    })
+
+    this.jobChanged(job, 'finished')
+  }
+
   jobChanged(job, stateKey) {
-    // this.jobFinishied(job)
-    job = ipc.sendSync('get job', { jobId: job.id })
+    job = ipc.sendSync('get job', { job })
     let jobs = [ job, ...this.state[stateKey]]
     if (jobs.length > this.defaultJobLimit)
       jobs = jobs.slice(0, this.defaultJobLimit)
@@ -72,8 +93,8 @@ class Home extends Component {
   }
 
   componentDidMount() {
-    ipc.on('job succeeded', (event, data) => this.jobChanged(data.job, 'finished'))
-    ipc.on('job failed', (event, data) => this.jobChanged(data.job, 'finished'))
+    ipc.on('job succeeded', (event, data) => this.jobFinished(data.job))
+    ipc.on('job failed', (event, data) => this.jobFinished(data.job))
 
     ipc.on('job pending', (event, data) => this.jobChanged(data.job, 'pending'))
     ipc.on('job progress', (event, data) => {
@@ -97,6 +118,7 @@ class Home extends Component {
     [
       'finished jobs',
       'job failed',
+      'job pending',
       'job progress',
       'job succeeded',
       'pending jobs',
@@ -119,9 +141,12 @@ class Home extends Component {
                 {
                   activeJobs.filter((job) => job._progress).map((job) => {
                     return (
-                      <li className="list-group-item" key={ job.id }>
+                      <li className="list-group-item py-3 mt-1" key={ job.id }>
+                        <button type="button" className="close" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
                         <div className="mb-1">{ jobDescription(job) }</div>
-                        <div className="progress">
+                        <div className="progress mt-3">
                           <div
                             className="progress-bar bg-success"
                             role="progressbar"
@@ -133,6 +158,10 @@ class Home extends Component {
                             { job._progress }%
                           </div>
                         </div>
+
+                        <small className="mt-2 class text-muted">
+                          Started at {  new Date(job.processedOn).toLocaleString() }
+                        </small>
                       </li>
                     )
                   })
@@ -145,7 +174,7 @@ class Home extends Component {
             </div>
           </div>
           <div className="col-lg">
-            <div className="mt-sm-5 mt-lg-0 mb-5">
+            <div className="mt-sm-5 mt-lg-0">
               <div>
                 <h3>Finished</h3>
               </div>
@@ -153,11 +182,10 @@ class Home extends Component {
                 <ul className="list-group">
                   {
                     finishedJobs.map((job) => {
-                      console.log(job)
                       return (
                         <li
                           className={
-                            `list-group-item list-group-item-${job.failedReason ? 'danger' : 'success'}`
+                            `mt-1 list-group-item list-group-item-${job.failedReason ? 'danger' : 'success'}`
                           }
                           key={job.id}
                           data-toggle="tooltip"
@@ -168,7 +196,8 @@ class Home extends Component {
                           <small
                             className="text-dark"
                           >
-                            ({ job.id }) { (job.finishedOn && new Date(job.finishedOn).toLocaleString()) || 'STALLED'}
+                            { (job.finishedOn &&
+                              `Finished at ${new Date(job.finishedOn).toLocaleString()}`) || 'STALLED'}, ID { job.id }
                           </small>
                         </li>
                       )
@@ -183,9 +212,9 @@ class Home extends Component {
               </div>
 
             </div>
-            <div className="mt-5">
-              <h3>Pending</h3>
-              <div id="pending">
+            <div className="mt-3">
+              <h3>Scheduled</h3>
+              <div id="scheduled">
                 <ul className="list-group">
                   {
                     pendingJobs.map((job) => {
@@ -195,6 +224,9 @@ class Home extends Component {
                           key={ job.id }
                         >
                           { jobDescription(job) }
+                          <small className="mt-2 class text-muted">
+                            Started at {  new Date(job.timestamp).toLocaleString() }
+                          </small>
                         </li>
                       )
                     })
@@ -203,7 +235,7 @@ class Home extends Component {
 
                 {
                   this.state.pending.length < 1&&
-                    <div className="text-muted mt-3 text-center">Nothing pending</div>
+                    <div className="text-muted mt-3 text-center">Nothing scheduled</div>
                 }
               </div>
             </div>

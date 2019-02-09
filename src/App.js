@@ -4,19 +4,23 @@ import { BrowserRouter, NavLink, Route } from 'react-router-dom'
 import './App.css';
 
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.min.js'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+// import 'popper.js/dist/popper.min.js'
 
-import Home from './components/Home'
-import ResizeStills from './components/ResizeStills'
-import GenerateThumbnails from './components/GenerateThumbnails'
+import logo from './assets/images/logo-dark.svg'
+
+import Home from './Home'
+import ResizeStills from './ResizeStills'
+import GenerateThumbnails from './GenerateThumbnails'
+import Transcode from './Transcode'
 
 class App extends Component {
   render() {
     return (
       <BrowserRouter>
         <div className="h-100">
-          <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <NavLink to="/" className="navbar-brand">publish50</NavLink>
+          <nav className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+            <NavLink to="/" className="navbar-brand"><img className="logo p-1 rounded-circle bg-light" src={ logo } alt="publish50" /></NavLink>
             <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
             </button>
@@ -37,6 +41,9 @@ class App extends Component {
                 <li className="nav-item">
                   <NavLink to="/resize-stills" className="nav-link">Resize Stills</NavLink>
                 </li>
+                <li className="nav-item">
+                  <NavLink to="/transcode" className="nav-link">Transcode</NavLink>
+                </li>
 
                 <li className="nav-item">
                   <NavLink to="/generate-thumbnails" className="nav-link">Generate Thumbnails</NavLink>
@@ -51,6 +58,7 @@ class App extends Component {
           <div className="container-fluid">
             <Route exact path="/" component={ Home } />
             <Route exact path="/resize-stills" component={ ResizeStills } />
+            <Route exact path="/transcode" component={ Transcode } />
             <Route exact path="/generate-thumbnails" component={ GenerateThumbnails } />
           </div>
           <script>
