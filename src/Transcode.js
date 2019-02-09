@@ -3,9 +3,6 @@ import React, { Component } from 'react';
 import DropZone from './DropZone'
 
 const ipc = window.require('electron').ipcRenderer
-function onSubmit(files) {
-  ipc.send('transcode', { files: Array.from(files), ...this.state })
-}
 
 function getInitialState() {
   return {
@@ -20,7 +17,8 @@ function getInitialState() {
       '1080p': true,
       '4k': true
     },
-    passes: 2
+    passes: 2,
+    formHidden: true
   }
 }
 
@@ -28,6 +26,15 @@ class Transcode extends Component {
   constructor(props) {
     super(props)
     this.state = getInitialState()
+  }
+
+  onDropzoneChange(files) {
+    this.setState({ formHidden: files.size < 1 })
+  }
+
+  onSubmit(files) {
+    ipc.send('transcode', { files: Array.from(files), ...this.state })
+    this.setState(getInitialState())
   }
 
   formatChanged(e) {
@@ -53,8 +60,8 @@ class Transcode extends Component {
   render() {
     return (
       <div className="w-75 mx-auto mt-5">
-        <DropZone accept="video/quicktime" caption="Transcode" onSubmit={ onSubmit.bind(this) }/>
-        <div className="mt-5 mx-auto">
+        <DropZone accept="video/quicktime" caption="Transcode" onSubmit={ this.onSubmit.bind(this) } onChange={ this.onDropzoneChange.bind(this) }/>
+        <div className={`mt-5 mx-auto ${(this.state.formHidden && "d-none") || ""}`}>
           <h3>Options</h3>
           <form>
             <div className="row">
@@ -74,7 +81,10 @@ class Transcode extends Component {
                       className="custom-control-label"
                       htmlFor={ format }>
                       { format }
+                      { format === 'mp3' &&
+                      <small className="text-muted"> (ignored for cameras and screens videos)</small>}
                     </label>
+
                   </div>
                 }) }
               </div>

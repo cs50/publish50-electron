@@ -123,6 +123,7 @@ module.exports = {
                 fs.unlinkSync(filename)
               })
             }
+
             resolve_()
           })
         })

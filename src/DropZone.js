@@ -28,6 +28,8 @@ class DropZone extends React.Component {
       if (files[i].type === this.props.accept)
         this.addFile(files[i].path)
     }
+
+    this.props.onChange(this.state.files)
   }
 
   onDrag(e) {
@@ -43,6 +45,8 @@ class DropZone extends React.Component {
       if (items[i].kind === 'file' && items[i].type=== this.props.accept)
         this.addFile(items[i].getAsFile().path)
     }
+
+    this.props.onChange(this.state.files)
   }
 
   onLeave(e) {
@@ -112,6 +116,5 @@ class DropZone extends React.Component {
     );
   }
 }
-
 
 export default DropZone;
