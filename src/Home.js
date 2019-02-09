@@ -63,27 +63,35 @@ class Home extends Component {
     ipc.on('active jobs', (event, data) => this.setState({ active: data.jobs }))
   }
 
+  findJobIndex(job, ls) {
+    return ls.findIndex((job_) => job_.id === job.id && job_.name === job.name)
+  }
+
   resetState() {
     this.setState(initialState)
   }
 
   jobFinished(job) {
-    const activeJobs = [ ...this.state.active ]
-    const i = activeJobs.findIndex((job_) => job_.id === job.id)
+    const active = [ ...this.state.active ]
+    const i = this.findJobIndex(job, active)
 
     if (i > -1)
-      activeJobs.splice(i, 1)
+      active.splice(i, 1)
 
-    this.setState({
-      active: activeJobs
-    })
+    this.setState({ active })
 
     this.jobChanged(job, 'finished')
   }
 
   jobChanged(job, stateKey) {
     job = ipc.sendSync('get job', { job })
-    let jobs = [ job, ...this.state[stateKey]]
+    let jobs = this.state[stateKey]
+    const i = this.findJobIndex(job, jobs)
+    if (i > -1)
+      jobs[i] = job
+    else
+      jobs = [ job, ...jobs ]
+
     if (jobs.length > this.defaultJobLimit)
       jobs = jobs.slice(0, this.defaultJobLimit)
 
@@ -92,25 +100,36 @@ class Home extends Component {
     })
   }
 
+  jobStarted(job) {
+    const pending = [ ...this.state.pending ]
+    const i = this.findJobIndex(job, pending)
+
+    if (i > -1)
+      pending.splice(i, 1)
+
+    this.setState({ pending })
+
+    this.jobChanged(job, 'active')
+  }
+
   componentDidMount() {
     ipc.on('job succeeded', (event, data) => this.jobFinished(data.job))
     ipc.on('job failed', (event, data) => this.jobFinished(data.job))
+    ipc.on('job started', (event, data) => this.jobStarted(data.job))
 
     ipc.on('job pending', (event, data) => this.jobChanged(data.job, 'pending'))
     ipc.on('job progress', (event, data) => {
       const { job } = data
-      const activeJobs = this.state.active
-      const i = activeJobs.findIndex((job_) => job_.id === job.id)
+      const active = this.state.active
+      const i = this.findJobIndex(job, active)
       if (i < -1) {
-        activeJobs.push(job)
+        active.push(job)
       }
       else {
-        activeJobs[i] = job
+        active[i] = job
       }
 
-      this.setState({
-        active: activeJobs
-      })
+      this.setState({ active })
     })
   }
 
@@ -120,6 +139,7 @@ class Home extends Component {
       'job failed',
       'job pending',
       'job progress',
+      'job started',
       'job succeeded',
       'pending jobs',
       'active jobs'
@@ -128,9 +148,9 @@ class Home extends Component {
   }
 
   render() {
-    const activeJobs = this.state.active
-    const pendingJobs = this.state.pending
-    const finishedJobs = this.state.finished
+    const active = this.state.active
+    const pending = this.state.pending
+    const finished = this.state.finished
     return (
       <div className="mt-3">
         <div className="row">
@@ -139,9 +159,9 @@ class Home extends Component {
             <div id="active">
               <ul className="list-group">
                 {
-                  activeJobs.filter((job) => job._progress).map((job) => {
+                  active.filter((job) => job._progress).map((job) => {
                     return (
-                      <li className="list-group-item py-3 mt-1" key={ job.id }>
+                      <li className="list-group-item py-3 mt-1" key={ `${job.name}:${job.id}` }>
                         <button type="button" className="close" aria-label="Close">
                           <span aria-hidden="true">&times;</span>
                         </button>
@@ -168,7 +188,7 @@ class Home extends Component {
                 }
               </ul>
               {
-                activeJobs < 1 &&
+                active < 1 &&
                   <div className="text-muted mt-3 text-center">Nothing running</div>
               }
             </div>
@@ -181,13 +201,13 @@ class Home extends Component {
               <div id="finished">
                 <ul className="list-group">
                   {
-                    finishedJobs.map((job) => {
+                    finished.map((job) => {
                       return (
                         <li
                           className={
                             `mt-1 list-group-item list-group-item-${job.failedReason ? 'danger' : 'success'}`
                           }
-                          key={job.id}
+                          key={ `${job.name}:${job.id}` }
                           data-toggle="tooltip"
                           data-placement="left"
                           title={ job.failedReason }
@@ -206,7 +226,7 @@ class Home extends Component {
                 </ul>
 
                 {
-                  finishedJobs.length < 1 &&
+                  finished.length < 1 &&
                     <div className="text-muted mt-3 text-center">Nothing finished</div>
                 }
               </div>
@@ -217,11 +237,11 @@ class Home extends Component {
               <div id="scheduled">
                 <ul className="list-group">
                   {
-                    pendingJobs.map((job) => {
+                    pending.map((job) => {
                       return (
                         <li
                           className="list-group-item list-group-item-warning"
-                          key={ job.id }
+                          key={ `${job.name}:${job.id}` }
                         >
                           { jobDescription(job) }
                           <small className="mt-2 class text-muted">
