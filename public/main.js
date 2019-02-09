@@ -153,7 +153,7 @@ ipc.on('resize stills', (event, data) => {
   })
 })
 
-queues['video transcoding'].process('transcode', 1, path.join(jobsPath, '/transcode.js'))
+queues['video transcoding'].process('transcode', 8, path.join(jobsPath, '/transcode.js'))
 ipc.on('transcode', (event, data) => {
   const { files, formats, rasters, passes } = data
   new Set(files).forEach((videoPath) => {
@@ -161,7 +161,7 @@ ipc.on('transcode', (event, data) => {
       return queues['video transcoding'].add('transcode', { videoPath })
     }
 
-    if (formats.mp3) {
+    if (formats.mp3 && !/-(a|b).mov$/.test(videoPath)) {
       queues['video transcoding'].add('transcode', { videoPath, format: 'mp3' })
     }
 

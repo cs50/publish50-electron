@@ -79,7 +79,6 @@ function transcode(job) {
       // sendToMainWindow('job progress', { job: simpleJob(job), progress })
     })
     .on('end', (e) => {
-      console.log(e)
       if (e.code !== 0)
         return reject(`ffmpeg exited with error code ${e.code}`)
 

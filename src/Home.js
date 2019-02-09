@@ -217,7 +217,7 @@ class Home extends Component {
                             className="text-dark"
                           >
                             { (job.finishedOn &&
-                              `Finished at ${new Date(job.finishedOn).toLocaleString()}`) || 'STALLED'}, ID { job.id }
+                              `Finished at ${new Date(job.finishedOn).toLocaleString()}`) || 'STALLED'}
                           </small>
                         </li>
                       )
@@ -245,7 +245,7 @@ class Home extends Component {
                         >
                           { jobDescription(job) }
                           <small className="mt-2 class text-muted">
-                            Started at {  new Date(job.timestamp).toLocaleString() }
+                            Received at {  new Date(job.timestamp).toLocaleString() }
                           </small>
                         </li>
                       )
