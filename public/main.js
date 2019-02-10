@@ -30,7 +30,13 @@ function createWindow() {
 
   mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
-  mainWindow.on('closed', () => mainWindow = null);
+  mainWindow.on('closed', () => {
+    Object.values(queues).forEach((queue) => {
+      queue.close().catch((err) => dialog.showErrorBox('Failed to close queues', err))
+    })
+
+    mainWindow = null
+  });
 
   mainWindow.openDevTools()
 }
