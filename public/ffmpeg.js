@@ -9,7 +9,7 @@ const EventEmitter = require('events')
 
 const { rasters, codecs } = require('./constants')
 
-class FfmpegEmitter extends EventEmitter {}
+class FFMPEGEmitter extends EventEmitter {}
 
 async function ffprobe(videoPath) {
   let metadata
@@ -76,7 +76,7 @@ function ffmpeg(videoPath) {
   return {
     async thumbnails(options) {
 
-      const emitter = new FfmpegEmitter()
+      const emitter = new FFMPEGEmitter()
       const { frequency, size, outFolder } = options
 
       let filters = `fps=(1/${frequency})`
@@ -113,7 +113,7 @@ function ffmpeg(videoPath) {
     },
 
     async transcode(options) {
-      const emitter = new FfmpegEmitter()
+      const emitter = new FFMPEGEmitter()
       const { outFile, format } = options
       let args = [
         '-nostdin',

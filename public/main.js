@@ -198,14 +198,17 @@ queues['video transcoding'].process('transcode', 8, path.join(jobsPath, '/transc
 ipc.on('transcode', (event, data) => {
   const { files, formats, rasters, passes } = data
   new Set(files).forEach((videoPath) => {
+    // Generate thumbnails
     if (!formats) {
       return queues['video transcoding'].add('transcode', { videoPath })
     }
 
+    // Transcode to mp3
     if (formats.mp3 && !/-(a|b).mov$/.test(videoPath)) {
       queues['video transcoding'].add('transcode', { videoPath, format: 'mp3' })
     }
 
+    // Transcode to mp4
     if (formats.mp4) {
       Object.keys(rasters).forEach((raster) => {
         if (rasters[raster])
