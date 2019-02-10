@@ -1,7 +1,6 @@
 const electron = require('electron');
 const ipc = electron.ipcMain
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
+const { app, BrowserWindow, dialog } = electron
 
 const path = require('path');
 const url = require('url');
@@ -49,8 +48,13 @@ Object.values(queues).forEach((queue) => {
   })
 
   queue.on('waiting', async (jobId) => {
-    const job = await queue.getJob(jobId)
-    sendToMainWindow('job pending', { job })
+    try {
+      const job = await queue.getJob(jobId)
+      sendToMainWindow('job pending', { job })
+    }
+    catch (err) {
+      dialog.showErrorBox('Failed to get job', err.toString())
+    }
   })
 
   queue.on('active', (job, jobPromise) => {
@@ -77,29 +81,50 @@ Object.values(queues).forEach((queue) => {
 
 ipc.on('get job', async (event, data) => {
   const queueName = data.job.queue.name
-  event.returnValue = await queues[queueName].getJob(data.job.id)
+  try {
+    event.returnValue = await queues[queueName].getJob(data.job.id)
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get job', err.toString())
+  }
+})
+
+ipc.on('remove job', async (event, data) => {
+  // (await queues[data.job.queue.name].getJob(data.job.id)).moveToFailed(new Error('Aborted'))
 })
 
 ipc.on('get finished jobs', async (event, data) => {
-  // Get completed jobs from all queues
-  const completedJobs = (
-    await Object.values(queues).reduce(async (acc, queue) => {
-      return Promise.resolve([ ...(await acc), ...(await queue.getCompleted()) ])
-    }, Promise.resolve([]))
-  )
+  let completedJobs, failedJobs
 
-    // Sort completed jobs from all queues by finished time (desc)
-    .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
+  try {
+    // Get completed jobs from all queues
+    completedJobs = (
+      await Object.values(queues).reduce(async (acc, queue) => {
+        return Promise.resolve([ ...(await acc), ...(await queue.getCompleted()) ])
+      }, Promise.resolve([]))
+    )
 
-  // Get failed jobs from all queues
-  const failedJobs = (
-    await Object.values(queues).reduce(async (acc, queue) => {
-      return [ ...(await acc), ...(await queue.getFailed()) ]
-    }, Promise.resolve([]))
-  )
+      // Sort completed jobs from all queues by finished time (desc)
+      .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get completed jobs', err.toString())
+  }
 
-    // Sort failed jobs from all queues by finished time (desc)
-    .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
+  try {
+    // Get failed jobs from all queues
+    failedJobs = (
+      await Object.values(queues).reduce(async (acc, queue) => {
+        return [ ...(await acc), ...(await queue.getFailed()) ]
+      }, Promise.resolve([]))
+    )
+
+      // Sort failed jobs from all queues by finished time (desc)
+      .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get failed jobs', err.toString())
+  }
 
   const jobs = [ ... completedJobs, ...failedJobs ]
     .sort((a, b) => parseInt(b.finishedOn) - parseInt(a.finishedOn))
@@ -113,19 +138,30 @@ ipc.on('get finished jobs', async (event, data) => {
 })
 
 ipc.on('get pending jobs', async (event, data) => {
-  const waitingJobs = (
-    await Object.values(queues).reduce(async (acc, queue) => {
-      return Promise.resolve([ ...(await acc), ...(await queue.getWaiting()) ])
-    }, Promise.resolve([]))
-  )
-    .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
+  let waitingJobs, delayedJobs
+  try {
+    waitingJobs = (
+      await Object.values(queues).reduce(async (acc, queue) => {
+        return Promise.resolve([ ...(await acc), ...(await queue.getWaiting()) ])
+      }, Promise.resolve([]))
+    )
+      .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get waiting jobs', err.toString())
+  }
 
-  const delayedJobs = (
-    await Object.values(queues).reduce(async (acc, queue) => {
-      return Promise.resolve([ ...(await acc), ...(await queue.getDelayed()) ])
-    }, Promise.resolve([]))
-  )
-    .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
+  try {
+    delayedJobs = (
+      await Object.values(queues).reduce(async (acc, queue) => {
+        return Promise.resolve([ ...(await acc), ...(await queue.getDelayed()) ])
+      }, Promise.resolve([]))
+    )
+      .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get delayed jobs', err.toString())
+  }
 
   const jobs = [ ...waitingJobs, ...delayedJobs]
     .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp))
@@ -134,14 +170,19 @@ ipc.on('get pending jobs', async (event, data) => {
 })
 
 ipc.on('get active jobs', async (event, data) => {
-  const jobs = (
-    await Object.values(queues).reduce(async (acc, queue) => {
-      return Promise.resolve([ ...(await acc), ...(await queue.getActive()) ])
-    }, Promise.resolve([]))
-  )
-    .sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp))
+  try {
+    const jobs = (
+      await Object.values(queues).reduce(async (acc, queue) => {
+        return Promise.resolve([ ...(await acc), ...(await queue.getActive()) ])
+      }, Promise.resolve([]))
+    )
+      .sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp))
 
-  event.sender.send( 'active jobs', { jobs })
+    event.sender.send( 'active jobs', { jobs })
+  }
+  catch (err) {
+    dialog.showErrorBox('Failed to get active jobs', err.toString())
+  }
 })
 
 queues['image processing'].process('resize still', 64, path.join(jobsPath, 'resize-still.js'))

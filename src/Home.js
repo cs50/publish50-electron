@@ -78,9 +78,7 @@ class Home extends Component {
     if (i > -1)
       active.splice(i, 1)
 
-    this.setState({ active })
-
-    this.jobChanged(job, 'finished')
+    this.setState({ active }, () => this.jobChanged(job, 'finished'))
   }
 
   jobChanged(job, stateKey) {
@@ -107,9 +105,7 @@ class Home extends Component {
     if (i > -1)
       pending.splice(i, 1)
 
-    this.setState({ pending })
-
-    this.jobChanged(job, 'active')
+    this.setState({ pending }, () => this.jobChanged(job, 'active'))
   }
 
   componentDidMount() {

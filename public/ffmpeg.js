@@ -1,38 +1,52 @@
-const { exec, spawn } = require('child_process')
 const fs = require('fs-extra')
 const path = require('path')
+const util = require('util')
+const childProcess = require('child_process')
+const exec = util.promisify(childProcess.exec)
+const spawn = childProcess.spawn
+
 const EventEmitter = require('events')
 
 const { rasters, codecs } = require('./constants')
 
 class FfmpegEmitter extends EventEmitter {}
 
-function ffprobe(videoPath) {
-  return new Promise((resolve, reject) => {
-    exec(
+async function ffprobe(videoPath) {
+  let metadata
+
+  try {
+    const { stdout, stderr } = await exec(
       `ffprobe \
       -loglevel quiet \
       -print_format json \
       -select_streams v:0 \
       -show_entries \
       'stream=duration,height,width' \
-      ${videoPath}`,
-      (err, stdout, stderr) => {
-        if (err)
-          return reject(err)
-
-        const metadata = JSON.parse(stdout).streams[0]
-        metadata.duration = Math.round(metadata.duration * 100) / 100
-        metadata.aspectRatio = Math.round(metadata.width * 1000 / metadata.height) / 1000
-        metadata.widescreen = [2.398, 2.370].indexOf(metadata.aspectRatio) > -1
-        resolve(metadata)
-      }
+      ${videoPath}`
     )
-  })
+
+    metadata = JSON.parse(stdout).streams[0]
+  }
+  catch (err) {
+    return Promise.reject(new Error(err))
+  }
+
+  // const metadata = JSON.parse(stdout).streams[0]
+  metadata.duration = Math.round(metadata.duration * 100) / 100
+  metadata.aspectRatio = Math.round(metadata.width * 1000 / metadata.height) / 1000
+  metadata.widescreen = [2.398, 2.370].indexOf(metadata.aspectRatio) > -1
+  return Promise.resolve(metadata)
 }
 
 async function ffmpegProgress(videoPath, process, callback) {
-  const metadata = await ffprobe(videoPath)
+  let metadata
+  try {
+    metadata = await ffprobe(videoPath)
+  }
+  catch (err) {
+    return Promise.reject(new Error(err))
+  }
+
   const msDuration = metadata.duration * 1000000
   let progress = {}
   let lines = ''
@@ -89,18 +103,15 @@ function ffmpeg(videoPath) {
       ]
 
       const process = spawn('ffmpeg', args)
-      // process.stderr.on('data', (err) => {
-        // emitter.emit('error', new Error(err))
-      // })
-
+      process.stderr.on('data', (err) => console.error(err.toString()))
       ffmpegProgress(videoPath, process, (progress) => emitter.emit('progress', progress))
-
       process.on('exit', (code, signal) => {
         emitter.emit('end', { code, signal })
       })
 
       return emitter
     },
+
     async transcode(options) {
       const emitter = new FfmpegEmitter()
       const { outFile, format } = options
@@ -122,12 +133,8 @@ function ffmpeg(videoPath) {
           )
 
           process = spawn('ffmpeg', args)
-          // process.stderr.on('data', (err) => {
-            // emitter.emit('error', new Error(err))
-          // })
-
+          process.stderr.on('data', (err) => console.error(err.toString()))
           ffmpegProgress(videoPath, process, (progress) => emitter.emit('progress', progress))
-
           process.on('exit', (code, signal) => {
             emitter.emit('end', { code, signal })
           })
@@ -135,7 +142,14 @@ function ffmpeg(videoPath) {
           return emitter
 
         case 'mp4':
-          const { widescreen } = await ffprobe(videoPath)
+          let widescreen
+          try {
+            widescreen = (await ffprobe(videoPath)).widescreen
+          }
+          catch(err) {
+            return Promise.reject(new Error(err))
+          }
+
           const { raster, passes } = options
           const progressHandler = ((pass, progress) => {
               // Emit actual progress if doing 1 pass
@@ -165,11 +179,13 @@ function ffmpeg(videoPath) {
             }
 
             process = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
-            process.stderr.on('data', (chunk) => console.log(chunk.toString()))
+            process.stderr.on('data', (err) => console.error(err.toString()))
             ffmpegProgress(videoPath, process, progressHandler.bind(null, 1))
             process.on('exit', (code) => {
-              if (code !== 0)
-                return reject(`ffmpeg exited with exit code ${code}`)
+              if (code !== 0) {
+                emitter.emit('end', { code })
+                return reject(new Error(`ffmpeg exited with exit code ${code}`))
+              }
 
               resolve(true)
             })
@@ -183,16 +199,13 @@ function ffmpeg(videoPath) {
               outFile
             ])
 
-            process.stderr.on('data', (chunk) => console.log(chunk.toString()))
+            process.stderr.on('data', (err) => console.error(err.toString()))
             ffmpegProgress(videoPath, process, progressHandler.bind(null, passes))
             process.on('exit', (code) => {
-              if (code !== 0)
-                return Promise.reject(`ffmpeg exited with exit code ${code}`)
-
               emitter.emit('end', { code })
-              return Promise.resolve()
             })
           })
+          .catch((err) => console.error(err))
 
           return emitter
 

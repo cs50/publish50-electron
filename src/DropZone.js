@@ -14,22 +14,26 @@ class DropZone extends React.Component {
   constructor(props) {
     super(props)
     this.state = getInitialState()
+    this.fileInputRef = React.createRef()
   }
 
-  addFile(p) {
+  addFile(p, callback) {
     this.setState({
       files: this.state.files.add(p)
-    })
+    }, callback)
   }
 
   onChange(e) {
     const files = e.target.files
     for (let i = 0; i < files.length; i++) {
       if (files[i].type === this.props.accept)
-        this.addFile(files[i].path)
+        this.addFile(files[i].path, () => {
+          if (this.props.onChange)
+            this.props.onChange(this.state.files)
+        })
     }
 
-    this.props.onChange(this.state.files)
+
   }
 
   onDrag(e) {
@@ -43,10 +47,11 @@ class DropZone extends React.Component {
     const items = e.dataTransfer.items
     for (let i = 0; i < items.length; i++) {
       if (items[i].kind === 'file' && items[i].type=== this.props.accept)
-        this.addFile(items[i].getAsFile().path)
+        this.addFile(items[i].getAsFile().path, () => {
+          if (this.props.onChange)
+            this.props.onChange(this.state.files)
+        })
     }
-
-    this.props.onChange(this.state.files)
   }
 
   onLeave(e) {
@@ -54,7 +59,11 @@ class DropZone extends React.Component {
   }
 
   onCancel() {
-    this.setState(getInitialState())
+    this.fileInputRef.current.value = null
+    this.setState(getInitialState(), () => {
+      if (this.props.onChange)
+        this.props.onChange(this.state.files)
+    })
   }
 
   onSubmit() {
@@ -110,6 +119,7 @@ class DropZone extends React.Component {
           type="file"
           accept={ this.props.accept }
           onChange={ this.onChange.bind(this) }
+          ref={ this.fileInputRef }
           multiple
         />
       </div>

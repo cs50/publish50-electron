@@ -16,47 +16,66 @@ async function generateThumbnails(job) {
   const frequency = 5
 
   // Calculate thumbnail width in terms of height
-  const { aspectRatio } = await ffprobe(videoPath)
+  let aspectRatio
+  try {
+    aspectRatio = (await ffprobe(videoPath)).aspectRatio
+  }
+  catch (err) {
+    return Promise.reject(new Error(err))
+  }
+
   const thumbnailWidth = Math.round(thumbnailHeight * aspectRatio)
   const size = `${thumbnailWidth}x${thumbnailHeight}`
 
-  return new Promise(async (resolve, reject) => {
-    const job_ = await ffmpeg(videoPath).thumbnails({
+  let job_
+
+  try {
+    job_ = await ffmpeg(videoPath).thumbnails({
       videoPath,
       outFolder,
       frequency,
       size
     })
+  }
+  catch (err) {
+    return Promise.reject(new Error(err))
+  }
 
-    job_.on('progress', (progress) => {
-      job.progress(progress.percent)
-      // sendToMainWindow('job progress', { job: simpleJob(job), progress })
-    })
-    .on('end', async (e) => {
+  job_.on('progress', (progress) => {
+    job.progress(progress.percent)
+  })
+
+  return new Promise((resolve, reject) => {
+    job_.on('end', async (e) => {
       if (e.code !== 0)
         return reject(new Error(`ffmpeg exited with error code ${e.code}`))
 
-      const stacks = await images.stackThumbnails({
-        thumbnailsFolder: outFolder,
-        stackSize,
-        basename
-      })
+      try {
+        const stacks = await images.stackThumbnails({
+          thumbnailsFolder: outFolder,
+          stackSize,
+          basename
+        })
 
-      await images.generateVTT({
-        outFile: path.join(path.dirname(outFolder), `${basename}.vtt`),
-        stacks,
-        stackSize,
-        frequency,
-        thumbnailWidth,
-        thumbnailHeight
-      })
+        await images.generateVTT({
+          outFile: path.join(path.dirname(outFolder), `${basename}.vtt`),
+          stacks,
+          stackSize,
+          frequency,
+          thumbnailWidth,
+          thumbnailHeight
+        })
+      }
+      catch (err) {
+        return reject(new Error(err))
+      }
 
       resolve()
     })
   })
 }
 
-function transcode(job) {
+async function transcode(job) {
   const { videoPath, format, raster } = job.data
   const basename = path.basename(videoPath, path.extname(videoPath))
   const outFolder = path.join(distFolder(videoPath))
@@ -68,21 +87,27 @@ function transcode(job) {
   else
     return Promise.reject(new Error(`unsupported format ${format}`))
 
-  return new Promise(async (resolve, reject) => {
-    const job_ = await ffmpeg(videoPath).transcode({
+  let job_
+  try {
+    job_ = await ffmpeg(videoPath).transcode({
       ...job.data,
       outFile
     })
+  }
+  catch (err) {
+    return Promise.reject(new Error(err))
+  }
 
-    job_.on('progress', (progress) => {
-      job.progress(progress.percent)
-      // sendToMainWindow('job progress', { job: simpleJob(job), progress })
-    })
-    .on('end', (e) => {
+  job_.on('progress', (progress) => {
+    job.progress(progress.percent)
+  })
+
+  return new Promise((resolve, reject) => {
+    job_.on('end', (e) => {
       if (e.code !== 0)
         return reject(`ffmpeg exited with error code ${e.code}`)
 
-      return resolve()
+      resolve()
     })
   })
 }
