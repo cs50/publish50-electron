@@ -38,7 +38,7 @@ async function ffprobe(videoPath) {
   return Promise.resolve(metadata)
 }
 
-async function ffmpegProgress(videoPath, process, callback) {
+async function ffmpegProgress(videoPath, child, callback) {
   let metadata
   try {
     metadata = await ffprobe(videoPath)
@@ -50,7 +50,7 @@ async function ffmpegProgress(videoPath, process, callback) {
   const msDuration = metadata.duration * 1000000
   let progress = {}
   let lines = ''
-  process.stdout.on('data', (chunk) => {
+  child.stdout.on('data', (chunk) => {
     lines += chunk.toString()
     if (!lines.endsWith('\n'))
       return
@@ -102,10 +102,10 @@ function ffmpeg(videoPath) {
         destination
       ]
 
-      const process = spawn('ffmpeg', args)
-      process.stderr.on('data', (err) => console.error(err.toString()))
-      ffmpegProgress(videoPath, process, (progress) => emitter.emit('progress', progress))
-      process.on('exit', (code, signal) => {
+      const child = spawn('ffmpeg', args)
+      child.stderr.on('data', (err) => console.error(err.toString()))
+      ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
+      child.on('exit', (code, signal) => {
         emitter.emit('end', { code, signal })
       })
 
@@ -122,7 +122,7 @@ function ffmpeg(videoPath) {
         '-progress', '-'
       ]
 
-      let process
+      let child
       switch (format) {
         case 'mp3':
           args.push(
@@ -132,10 +132,10 @@ function ffmpeg(videoPath) {
             outFile
           )
 
-          process = spawn('ffmpeg', args)
-          process.stderr.on('data', (err) => console.error(err.toString()))
-          ffmpegProgress(videoPath, process, (progress) => emitter.emit('progress', progress))
-          process.on('exit', (code, signal) => {
+          child = spawn('ffmpeg', args)
+          child.stderr.on('data', (err) => console.error(err.toString()))
+          ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
+          child.on('exit', (code, signal) => {
             emitter.emit('end', { code, signal })
           })
 
@@ -178,10 +178,10 @@ function ffmpeg(videoPath) {
               return resolve(false)
             }
 
-            process = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
-            process.stderr.on('data', (err) => console.error(err.toString()))
-            ffmpegProgress(videoPath, process, progressHandler.bind(null, 1))
-            process.on('exit', (code) => {
+            child = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
+            child.stderr.on('data', (err) => console.error(err.toString()))
+            ffmpegProgress(videoPath, child, progressHandler.bind(null, 1))
+            child.on('exit', (code) => {
               if (code !== 0) {
                 emitter.emit('end', { code })
                 return reject(new Error(`ffmpeg exited with exit code ${code}`))
@@ -191,7 +191,7 @@ function ffmpeg(videoPath) {
             })
           })
           .then((previousPass) => {
-            process = spawn('ffmpeg', [
+            child = spawn('ffmpeg', [
               ...args,
               '-pass', previousPass ? '2' : '1',
               '-ac', '2',
@@ -199,9 +199,9 @@ function ffmpeg(videoPath) {
               outFile
             ])
 
-            process.stderr.on('data', (err) => console.error(err.toString()))
-            ffmpegProgress(videoPath, process, progressHandler.bind(null, passes))
-            process.on('exit', (code) => {
+            child.stderr.on('data', (err) => console.error(err.toString()))
+            ffmpegProgress(videoPath, child, progressHandler.bind(null, passes))
+            child.on('exit', (code) => {
               emitter.emit('end', { code })
             })
           })
