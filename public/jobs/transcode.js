@@ -46,7 +46,7 @@ async function generateThumbnails(job) {
 
   return new Promise((resolve, reject) => {
     process.on('message', (message) => {
-      if (message.__abortJobId__ === job.id || message.__abortJobId__ === 'self') {
+      if (message.__abortJobId__ === job.id || message.__abortJobId__ === '__self__') {
         job_.emit('abort')
         return reject(new Error("ABORTED"))
       }
@@ -112,7 +112,7 @@ async function transcode(job) {
 
   return new Promise((resolve, reject) => {
     process.on('message', (message) => {
-      if (message.__abortJobId__ === job.id || message.__abortJobId__ === 'self') {
+      if (message.__abortJobId__ === job.id || message.__abortJobId__ === '__self__') {
         job_.emit('abort')
         return reject(new Error("ABORTED"))
       }

@@ -32,10 +32,6 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
   mainWindow.on('closed', () => {
     Object.values(queues).forEach((queue) => {
-      // Stop processing new jobs
-      // queue.pause().catch((err) => {
-      //   dialog.showErrorBox(`Failed to pause queue ${queue.name}`, err)
-      // })
 
       // Abort running jobs
       Object.values(queue.childPool.retained).forEach((child) => {
