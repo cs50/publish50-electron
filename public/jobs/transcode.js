@@ -1,7 +1,6 @@
 const path = require('path')
 const { ffmpeg, ffprobe } = require('../ffmpeg')
 const images = require('../images')
-// const utils = require('../utils')
 
 function distFolder(videoPath) {
   return path.join(path.dirname(videoPath), '../dist')
@@ -46,9 +45,18 @@ async function generateThumbnails(job) {
   })
 
   return new Promise((resolve, reject) => {
-    job_.on('end', async (e) => {
-      if (e.code !== 0)
-        return reject(new Error(`ffmpeg exited with error code ${e.code}`))
+    process.on('message', (message) => {
+      if (message.__abortJobId__ === job.id || message.__abortJobId__ === 'self') {
+        job_.emit('abort')
+        return reject(new Error("ABORTED"))
+      }
+    })
+
+    job_.on('end', async ({ code, signal }) => {
+      if (signal)
+        return reject(new Error(`ffmpeg received ${signal} (exited)`))
+      else if (code !== 0)
+        return reject(new Error(`ffmpeg exited with error code ${code}`))
 
       try {
         const stacks = await images.stackThumbnails({
@@ -103,6 +111,13 @@ async function transcode(job) {
   })
 
   return new Promise((resolve, reject) => {
+    process.on('message', (message) => {
+      if (message.__abortJobId__ === job.id || message.__abortJobId__ === 'self') {
+        job_.emit('abort')
+        return reject(new Error("ABORTED"))
+      }
+    })
+
     job_.on('end', (e) => {
       if (e.code !== 0)
         return reject(`ffmpeg exited with error code ${e.code}`)

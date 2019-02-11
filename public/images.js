@@ -1,12 +1,12 @@
 const im = require('imagemagick')
 const fs = require('fs')
-const fsPromises = fs.promises
 const path = require('path')
 const util = require('util')
 
 const { rasters } = require('./constants')
 
 const convert = util.promisify(im.convert)
+const readdir = util.promisify(fs.readdir)
 
 function dd(n) {
   return `${n < 10 ? '0' : ''}${n}`
@@ -93,7 +93,7 @@ module.exports = {
 
     let filenames
     try {
-      filenames = (await fsPromises.readdir(thumbnailsFolder))
+      filenames = (await readdir(thumbnailsFolder))
         .filter((filename) => path.extname(filename) === '.jpg')
 
          // Naturally sort filenames

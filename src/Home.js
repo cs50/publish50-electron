@@ -143,6 +143,10 @@ class Home extends Component {
     .forEach((event) => ipc.removeAllListeners(event))
   }
 
+  abort(job) {
+    ipc.send('abort job', { job })
+  }
+
   render() {
     const active = this.state.active
     const pending = this.state.pending
@@ -158,7 +162,7 @@ class Home extends Component {
                   active.filter((job) => job._progress).map((job) => {
                     return (
                       <li className="list-group-item py-3 mt-1" key={ `${job.name}:${job.id}` }>
-                        <button type="button" className="close" aria-label="Close">
+                        <button type="button" className="close" aria-label="Close" onClick={ this.abort.bind(this, job) }>
                           <span aria-hidden="true">&times;</span>
                         </button>
                         <div className="mb-1">{ jobDescription(job) }</div>

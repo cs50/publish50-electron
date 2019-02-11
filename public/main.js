@@ -22,8 +22,8 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: 1600,
+    height: 900,
     icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
     show: false
   });
@@ -32,13 +32,26 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
   mainWindow.on('closed', () => {
     Object.values(queues).forEach((queue) => {
-      queue.close().catch((err) => dialog.showErrorBox('Failed to close queues', err))
+      // Stop processing new jobs
+      // queue.pause().catch((err) => {
+      //   dialog.showErrorBox(`Failed to pause queue ${queue.name}`, err)
+      // })
+
+      // Abort running jobs
+      Object.values(queue.childPool.retained).forEach((child) => {
+        child.send({__abortJobId__: '__self__'})
+      })
+
+      // Close queues
+      queue.close().catch((err) => {
+        dialog.showErrorBox(`Failed to close queue ${queue.name}`, err)
+      })
     })
 
     mainWindow = null
   });
 
-  mainWindow.openDevTools()
+  // mainWindow.openDevTools()
 }
 
 function sendToMainWindow(event, data) {
@@ -64,7 +77,6 @@ Object.values(queues).forEach((queue) => {
   })
 
   queue.on('active', (job, jobPromise) => {
-    // TODO jobPromise.cancel() to abort
     sendToMainWindow('job started', { job })
   })
 
@@ -95,8 +107,10 @@ ipc.on('get job', async (event, data) => {
   }
 })
 
-ipc.on('remove job', async (event, data) => {
-  // (await queues[data.job.queue.name].getJob(data.job.id)).moveToFailed(new Error('Aborted'))
+ipc.on('abort job', async (event, data) => {
+  Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
+    child.send({__abortJobId__: data.job.id})
+  })
 })
 
 ipc.on('get finished jobs', async (event, data) => {

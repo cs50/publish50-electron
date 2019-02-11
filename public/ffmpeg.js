@@ -103,9 +103,12 @@ function ffmpeg(videoPath) {
       ]
 
       const child = spawn('ffmpeg', args)
+      const kill = () => child.kill
+      emitter.once('abort', kill)
       child.stderr.on('data', (err) => console.error(err.toString()))
       ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
       child.on('exit', (code, signal) => {
+        emitter.off('abort', kill)
         emitter.emit('end', { code, signal })
       })
 
@@ -133,9 +136,12 @@ function ffmpeg(videoPath) {
           )
 
           child = spawn('ffmpeg', args)
+          const kill = () => child.kill()
+          emitter.once("abort", kill)
           child.stderr.on('data', (err) => console.error(err.toString()))
           ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
           child.on('exit', (code, signal) => {
+            emitter.off("abort", kill)
             emitter.emit('end', { code, signal })
           })
 
@@ -179,10 +185,13 @@ function ffmpeg(videoPath) {
             }
 
             child = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
+            const kill = () => child.kill()
+            emitter.once("abort", kill)
             child.stderr.on('data', (err) => console.error(err.toString()))
             ffmpegProgress(videoPath, child, progressHandler.bind(null, 1))
             child.on('exit', (code) => {
               if (code !== 0) {
+                job.off("abort", kill)
                 emitter.emit('end', { code })
                 return reject(new Error(`ffmpeg exited with exit code ${code}`))
               }
@@ -199,9 +208,12 @@ function ffmpeg(videoPath) {
               outFile
             ])
 
+            const kill = () => child.kill()
+            emitter.once("abort", kill)
             child.stderr.on('data', (err) => console.error(err.toString()))
             ffmpegProgress(videoPath, child, progressHandler.bind(null, passes))
             child.on('exit', (code) => {
+              emitter.off("kill", kill)
               emitter.emit('end', { code })
             })
           })
