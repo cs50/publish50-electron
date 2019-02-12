@@ -112,8 +112,8 @@ module.exports = {
     let stacksOut = []
 
     try {
-      await (async () => {
-        stacks.forEach(async (stack, i) => {
+      await (Promise.all(
+        stacks.map(async (stack, i) => {
           const stackOut = path.join(thumbnailsFolder, `${basename}-${i}.jpg`)
           await convert([
             ...stack,
@@ -122,14 +122,13 @@ module.exports = {
           ])
 
           stacksOut.push(stackOut)
-
           if (removeSingles) {
             stack.forEach((filename) => {
               fs.unlinkSync(filename)
             })
           }
         })
-      })()
+      ))
     }
     catch (err) {
       return Promise.reject(new Error(err))
