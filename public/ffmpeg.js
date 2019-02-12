@@ -191,7 +191,7 @@ function ffmpeg(videoPath) {
             ffmpegProgress(videoPath, child, progressHandler.bind(null, 1))
             child.on('exit', (code) => {
               if (code !== 0) {
-                job.off("abort", kill)
+                emitter.off("abort", kill)
                 emitter.emit('end', { code })
                 return reject(new Error(`ffmpeg exited with exit code ${code}`))
               }
