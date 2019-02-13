@@ -7,12 +7,16 @@ function distFolder(videoPath) {
 }
 
 async function generateThumbnails(job) {
-  const { videoPath } = job.data
+  const {
+    videoPath,
+    thumbnailFrequency,
+    thumbnailStackSize,
+    thumbnailHeight,
+    thumbnailStacksOnly
+  } = job.data
+
   const basename = path.basename(videoPath, path.extname(videoPath))
   const outFolder = path.join(distFolder(videoPath), 'thumbnails')
-  const stackSize = 12
-  const thumbnailHeight = 90
-  const frequency = 5
 
   // Calculate thumbnail width in terms of height
   let aspectRatio
@@ -32,7 +36,7 @@ async function generateThumbnails(job) {
     job_ = await ffmpeg(videoPath).thumbnails({
       videoPath,
       outFolder,
-      frequency,
+      thumbnailFrequency,
       size
     })
   }
@@ -61,15 +65,16 @@ async function generateThumbnails(job) {
       try {
         const stacks = await images.stackThumbnails({
           thumbnailsFolder: outFolder,
-          stackSize,
+          thumbnailStackSize,
+          thumbnailStacksOnly,
           basename
         })
 
         await images.generateVTT({
           outFile: path.join(path.dirname(outFolder), `${basename}.vtt`),
           stacks,
-          stackSize,
-          frequency,
+          thumbnailStackSize,
+          thumbnailFrequency,
           thumbnailWidth,
           thumbnailHeight
         })

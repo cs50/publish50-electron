@@ -86,10 +86,7 @@ module.exports = {
   },
 
   async stackThumbnails(options) {
-    const thumbnailsFolder = options.thumbnailsFolder
-    const basename = options.basename
-    const stackSize = options.stackSize || 12
-    const removeSingles = options.removeSingles || true
+    const { thumbnailsFolder, basename, thumbnailStackSize, thumbnailStacksOnly } = options
 
     let filenames
     try {
@@ -105,8 +102,8 @@ module.exports = {
     }
 
     const stacks = []
-    for (let i = 0; i < filenames.length; i += stackSize) {
-      stacks.push(filenames.slice(i, i + stackSize))
+    for (let i = 0; i < filenames.length; i += thumbnailStackSize) {
+      stacks.push(filenames.slice(i, i + thumbnailStackSize))
     }
 
     let stacksOut = []
@@ -122,7 +119,7 @@ module.exports = {
           ])
 
           stacksOut.push(stackOut)
-          if (removeSingles) {
+          if (thumbnailStacksOnly) {
             stack.forEach((filename) => {
               fs.unlinkSync(filename)
             })
@@ -141,7 +138,7 @@ module.exports = {
     const {
       stacks,
       outFile,
-      stackSize,
+      thumbnailStackSize,
       frequency,
       cdnURL,
       thumbnailWidth,
@@ -152,7 +149,7 @@ module.exports = {
     let seconds = 0
     let y = 0
     stacks.map((stack, i) => {
-      for (let j = 0; j < stackSize; j++) {
+      for (let j = 0; j < thumbnailStackSize; j++) {
         vtt += `${hhmmssttt(seconds)} --> ${hhmmssttt(seconds += frequency)}`
         vtt += '\n'
         vtt += `${cdnURL || '{CDN_URL}'}/${path.basename(stack)}#xywh=0,${y},${thumbnailWidth},${thumbnailHeight}`

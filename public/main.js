@@ -1,34 +1,61 @@
-const electron = require('electron');
+const electron = require('electron')
 const ipc = electron.ipcMain
 const { app, BrowserWindow, dialog } = electron
-
-const path = require('path');
-const url = require('url');
-const isDev = require('electron-is-dev');
-
 const { rasters } = require('./constants')
-const { ffprobe, ffmpeg } = require('./ffmpeg')
-const images = require('./images')
+const settings = require('electron-settings')
+
+const path = require('path')
+const url = require('url')
+const isDev = require('electron-is-dev')
 
 const jobsPath = path.join(__dirname, 'jobs')
 
 const Queue = require('bull')
-const queueNames = [ 'image processing', 'video transcoding' ]
+const queueNames = [ 'image processing', 'video transcoding', 'metadata' ]
 const queues = {}
 queueNames.forEach((queueName) => queues[queueName] = new Queue(queueName))
 
+let mainWindow
+const defaults = {
+  general: {
+    redisPort: 6379,
+    imageProcessingWorkers: 64,
+    videoTranscodingWorkers: 8
+  },
+  awsCredentials: {
+    accessKeyId:'',
+    secretAccessKey:''
+  },
+  ffmpeg: {
+    thumbnailFrequency: 5,
+    thumbnailHeight: 90,
+    thumbnailStackSize: 12,
+    thumbnailStacksOnly: true
+  },
+  s3: {
+    bucket: 'cdn.cs50.net',
+    prefix: ''
+  },
+  about: {
+    version: app.getVersion()
+  }
+}
 
-let mainWindow;
+let prefs = loadSettings()
 
-function createWindow() {
+function initialize() {
   mainWindow = new BrowserWindow({
     width: 1600,
     height: 900,
     icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
     show: false
-  });
+  })
 
-  mainWindow.loadURL(isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`);
+  mainWindow.loadURL(isDev ?
+    'http://localhost:3000' :
+    `file://${path.join(__dirname, '../build/index.html')}`
+  )
+
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
   mainWindow.on('closed', () => {
     Object.values(queues).forEach((queue) => {
@@ -45,9 +72,42 @@ function createWindow() {
     })
 
     mainWindow = null
-  });
+  })
+}
 
-  // mainWindow.openDevTools()
+function loadSettings(reset=false) {
+  if (reset || Object.keys(settings.getAll()).length < 1) {
+    settings.setAll(defaults)
+    return defaults
+  }
+
+  const prefs_ = {}
+  Object.keys(defaults).forEach((key) => {
+    prefs_[key] = settings.get(key, defaults[key])
+  })
+
+  return prefs_
+}
+
+function validateSettings(s) {
+  s.general.redisPort = parseInt(s.general.redisPort) ||
+    defaults.general.redisPort
+
+  s.general.imageProcessingWorkers = parseInt(s.general.imageProcessingWrokers) ||
+    defaults.general.imageProcessingWorkers
+
+  s.general.videoTranscodingWorkers = parseInt(s.general.videoTranscodingWorkers) ||
+    defaults.general.videoTranscoldingWorkers
+
+  s.ffmpeg.thumbnailFrequency = parseInt(s.ffmpeg.thumbnailFrequency) ||
+    defaults.ffmpeg.thumbnailFrequency
+
+  s.ffmpeg.thumbnailStackSize = parseInt(s.ffmpeg.thumbnailStackSize) ||
+    defaults.ffmpeg.thumbnailStackSize
+
+  s.ffmpeg.thumbnailStacksOnly = s.ffmpeg.thumbnailStacksOnly && true
+
+  return s
 }
 
 function sendToMainWindow(event, data) {
@@ -91,6 +151,20 @@ Object.values(queues).forEach((queue) => {
   queue.on('failed', (job, err) => {
     sendToMainWindow('job failed', { job, err })
   })
+})
+
+ipc.on('get preferences', (event, data) => {
+  event.returnValue = loadSettings()
+})
+
+ipc.on('save preferences', (event, data) => {
+  prefs = validateSettings(data)
+  settings.setAll(prefs)
+})
+
+ipc.on('reset preferences', (event, data) => {
+  settings.setAll(defaults)
+  event.returnValue = defaults
 })
 
 ipc.on('get job', async (event, data) => {
@@ -201,7 +275,23 @@ ipc.on('get active jobs', async (event, data) => {
   }
 })
 
-queues['image processing'].process('resize still', 64, path.join(jobsPath, 'resize-still.js'))
+queues['metadata'].process('update metadata', 1, path.join(jobsPath, 'metadata.js'))
+ipc.on('update metadata', (event, data) => {
+  const { bucket, prefix, metadata } = data
+  queues['metadata'].add('update metadata', {
+    ...prefs.awsCredentials,
+    bucket,
+    prefix,
+    metadata
+  })
+})
+
+queues['image processing'].process(
+  'resize still',
+  prefs.general.imageProcessingWorkers,
+  path.join(jobsPath, 'resize-still.js')
+)
+
 ipc.on('resize stills', (event, data) => {
   new Set(data.files).forEach((imagePath) => {
     Object.keys(rasters).forEach((raster) => {
@@ -210,13 +300,27 @@ ipc.on('resize stills', (event, data) => {
   })
 })
 
-queues['video transcoding'].process('transcode', 8, path.join(jobsPath, '/transcode.js'))
+queues['video transcoding'].process(
+  'transcode',
+  prefs.general.videoTranscodingWorkers,
+  path.join(jobsPath, '/transcode.js')
+)
+
 ipc.on('transcode', (event, data) => {
   const { files, formats, rasters, passes } = data
   new Set(files).forEach((videoPath) => {
     // Generate thumbnails
     if (!formats) {
-      return queues['video transcoding'].add('transcode', { videoPath })
+      return queues['video transcoding'].add(
+        'transcode',
+        {
+          videoPath,
+          thumbnailFrequency: prefs.ffmpeg.thumbnailFrequency,
+          thumbnailHeight: prefs.ffmpeg.thumbnailHeight,
+          thumbnailStackSize: prefs.ffmpeg.thumbnailStackSize,
+          thumbnailStacksOnly: prefs.ffmpeg.thumbnailStacksOnly
+        }
+      )
     }
 
     // Transcode to mp3
@@ -234,16 +338,16 @@ ipc.on('transcode', (event, data) => {
   })
 })
 
-app.on('ready', createWindow);
+app.on('ready', initialize)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit();
+    app.quit()
   }
-});
+})
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow();
+    initialize()
   }
-});
+})

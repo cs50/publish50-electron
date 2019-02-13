@@ -75,11 +75,10 @@ async function ffmpegProgress(videoPath, child, callback) {
 function ffmpeg(videoPath) {
   return {
     async thumbnails(options) {
-
       const emitter = new FFMPEGEmitter()
-      const { frequency, size, outFolder } = options
+      const { thumbnailFrequency, size, outFolder } = options
 
-      let filters = `fps=(1/${frequency})`
+      let filters = `fps=(1/${thumbnailFrequency})`
       if (size)
         filters += `,scale=${size}`
 

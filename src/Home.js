@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import * as path from 'path'
+
 const initialState = {
   active: [],
   pending: [],
@@ -19,7 +21,7 @@ function jobDescription(job) {
     case 'resize still':
       return (
         <div>
-          Resize <span data-toggle="tooltip" data-placement="left" title={ job.data.imagePath }>
+          Resize <span title={ job.data.imagePath }>
             '{ truncate(job.data.imagePath) }'
           </span> to '{ job.data.raster }'
         </div>
@@ -38,6 +40,9 @@ function jobDescription(job) {
         { truncate(job.data.videoPath) }
         </span>
       </div>
+
+    case 'update metadata':
+      return <div>Update { truncate(path.join(job.data.bucket, job.data.prefix, 'metadata.json')) }</div>
 
     default:
       return <div>Unknown job</div>
@@ -152,10 +157,18 @@ class Home extends Component {
     const pending = this.state.pending
     const finished = this.state.finished
     return (
-      <div className="mt-3">
+      <div className="mt-3 container-fluid">
         <div className="row">
           <div className="col-lg">
-            <h3>Running</h3>
+            <div className="row">
+              <div className="col">
+                <h3>Running</h3>
+              </div>
+              <div className="col text-right">
+                { active.length > 0 &&
+                  <button type="button" className="btn btn-link btn-sm">Stop all</button> }
+              </div>
+            </div>
             <div id="active">
               <ul className="list-group">
                 {
@@ -196,7 +209,15 @@ class Home extends Component {
           <div className="col-lg">
             <div className="mt-sm-5 mt-lg-0">
               <div>
-                <h3>Finished</h3>
+                <div className="row">
+                  <div className="col">
+                    <h3>Finished</h3>
+                  </div>
+                  <div className="col text-right">
+                    { finished.length > 0 &&
+                    <button type="button" className="btn btn-link btn-sm">Remove all</button> }
+                  </div>
+                </div>
               </div>
               <div id="finished">
                 <ul className="list-group">
@@ -208,8 +229,6 @@ class Home extends Component {
                             `mt-1 list-group-item list-group-item-${job.failedReason ? 'danger' : 'success'}`
                           }
                           key={ `${job.name}:${job.id}` }
-                          data-toggle="tooltip"
-                          data-placement="left"
                           title={ job.failedReason }
                         >
                           <div>{ jobDescription(job) }</div>
