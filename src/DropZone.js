@@ -46,7 +46,7 @@ class DropZone extends React.Component {
     e.target.classList.remove('drag-enter')
     const items = e.dataTransfer.items
     for (let i = 0; i < items.length; i++) {
-      if (items[i].kind === 'file' && items[i].type=== this.props.accept)
+      if (items[i].kind === 'file' && this.props.accept.split(',').indexOf(items[i].type) > -1)
         this.addFile(items[i].getAsFile().path, () => {
           if (this.props.onChange)
             this.props.onChange(this.state.files)
