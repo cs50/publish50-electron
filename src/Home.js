@@ -87,19 +87,21 @@ class Home extends Component {
   }
 
   jobChanged(job, stateKey) {
-    job = ipc.sendSync('get job', { job })
-    let jobs = this.state[stateKey]
-    const i = this.findJobIndex(job, jobs)
-    if (i > -1)
-      jobs[i] = job
-    else
-      jobs = [ job, ...jobs ]
+    ipc.send('get job', { job })
+    ipc.once('job', (event, job) => {
+      let jobs = this.state[stateKey]
+      const i = this.findJobIndex(job, jobs)
+      if (i > -1)
+        jobs[i] = job
+      else
+        jobs = [ job, ...jobs ]
 
-    if (jobs.length > this.defaultJobLimit)
-      jobs = jobs.slice(0, this.defaultJobLimit)
+      if (jobs.length > this.defaultJobLimit)
+        jobs = jobs.slice(0, this.defaultJobLimit)
 
-    this.setState({
-      [stateKey]: jobs
+      this.setState({
+        [stateKey]: jobs
+      })
     })
   }
 

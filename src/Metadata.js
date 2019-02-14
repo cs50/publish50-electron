@@ -6,13 +6,18 @@ import './Metadata.css'
 
 const ipc = window.require('electron').ipcRenderer
 
-const prefs = ipc.sendSync('get preferences')
-const s3Client = new AWS.S3({
-  accessKeyId: prefs.awsCredentials.accessKeyId,
-  secretAccessKey: prefs.awsCredentials.secretAccessKey
+// const prefs = ipc.sendSync('get preferences')
+let s3Client, Bucket
+ipc.send('get preferences')
+ipc.once('preferences', (event, prefs) => {
+  s3Client = new AWS.S3({
+    accessKeyId: prefs.awsCredentials.accessKeyId,
+    secretAccessKey: prefs.awsCredentials.secretAccessKey
+  })
+
+  Bucket = prefs.s3.bucket
 })
 
-const Bucket = prefs.s3.bucket
 let controller = new AbortController()
 let signal = controller.signal
 
@@ -40,9 +45,9 @@ class Metadata extends Component {
   getInitialState() {
     return {
       updateDisabled: true,
-      preferences: ipc.sendSync('get preferences'),
+      preferences: null,
       prefixes: [],
-      prefix: prefs.s3.prefix,
+      prefix: null,
       prefixesMenuOpen: false,
       lastMetadataRequest: null,
       metadata: {
@@ -63,7 +68,7 @@ class Metadata extends Component {
   }
 
   render() {
-    return (
+    return this.state.preferences && (
       <div className="w-75 mx-auto mt-5">
         <label>Location</label>
         <div className="form-group">
@@ -262,7 +267,7 @@ class Metadata extends Component {
                     let value = e.target.value
 
                     const matches = value.match(
-                      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+                      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
                     )
 
                     if (matches && matches[2])

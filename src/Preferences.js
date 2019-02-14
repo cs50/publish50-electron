@@ -8,13 +8,26 @@ class Preferences extends Component {
   constructor(props) {
     super(props)
     this.state = this.getInitialState()
+    this.getPreferences((preferences) => {
+      this.setState({ preferences })
+    })
+
     this.awsSecretAccessKeyRef = React.createRef()
+  }
+
+  getPreferences(reset=false, callback) {
+    if (reset)
+      ipc.send('reset preferences')
+    else
+      ipc.send('get preferences')
+
+    ipc.once('preferences', (event, preferences) => callback(preferences))
   }
 
   getInitialState() {
     return {
       disableSave: true,
-      preferences: ipc.sendSync('get preferences')
+      preferences: null
     }
   }
 
@@ -24,11 +37,6 @@ class Preferences extends Component {
     })
 
     ipc.send('save preferences', this.state.preferences)
-  }
-
-  reset() {
-    ipc.sendSync('reset preferences')
-    this.setState(this.getInitialState())
   }
 
   onChange(path, valueKey, e) {
@@ -59,7 +67,7 @@ class Preferences extends Component {
   }
 
   render() {
-    return (
+    return this.state.preferences && (
       <div className="row flex-grow-* w-100 ml-0">
         <div className="col-lg-2 flex-grow-1 d-flex pl-0">
           <ul className="list-group text-primary d-flex flex-grow-1">
@@ -334,7 +342,7 @@ class Preferences extends Component {
             <button
               type="button"
               className="btn btn-secondary ml-1"
-              onClick={ this.reset.bind(this) }>
+              onClick={ this.getPreferences.bind(this, true) }>
                 Reset Defaults
             </button>
           </div>
