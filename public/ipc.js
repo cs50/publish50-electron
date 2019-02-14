@@ -1,6 +1,4 @@
 module.exports = function (ipc, currentWindow, preferences, queues) {
-  console.log('IPC IS', ipc)
-  // const { queues } = require('./queues')
   const { rasters } = require('./constants')
 
   function sendToCurrentWindow(event, data) {

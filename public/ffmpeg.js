@@ -117,6 +117,11 @@ function ffmpeg(videoPath) {
     async transcode(options) {
       const emitter = new FFMPEGEmitter()
       const { outFile, format } = options
+
+      const outFolder = path.dirname(outFile)
+      if (!fs.existsSync(outFolder))
+        fs.mkdirpSync(outFolder)
+
       let args = [
         '-nostdin',
         '-i', videoPath,
