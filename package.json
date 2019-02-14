@@ -1,6 +1,8 @@
 {
   "name": "publish50",
   "version": "0.1.0",
+  "description": "Automates video transcoding and publishing",
+  "author": "CS50",
   "private": true,
   "dependencies": {
     "aws-sdk": "^2.401.0",
@@ -26,7 +28,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron-pack": "yarn build && build -c.extraMetadata.main=build/main.js"
+    "electron-pack": "yarn build && build -c.extraMetadata.main=build/electron.js"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -43,7 +45,7 @@
     "electron-builder": "^20.38.5",
     "wait-on": "^3.2.0"
   },
-  "main": "public/main.js",
+  "main": "public/electron.js",
   "build": {
     "appId": "io.cs50.publish",
     "files": [

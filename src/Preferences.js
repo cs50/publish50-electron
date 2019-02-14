@@ -8,14 +8,12 @@ class Preferences extends Component {
   constructor(props) {
     super(props)
     this.state = this.getInitialState()
-    this.getPreferences((preferences) => {
-      this.setState({ preferences })
-    })
+    this.getPreferences((preferences) => this.setState({ preferences }))
 
     this.awsSecretAccessKeyRef = React.createRef()
   }
 
-  getPreferences(reset=false, callback) {
+  getPreferences(callback, reset) {
     if (reset)
       ipc.send('reset preferences')
     else
@@ -342,7 +340,7 @@ class Preferences extends Component {
             <button
               type="button"
               className="btn btn-secondary ml-1"
-              onClick={ this.getPreferences.bind(this, true) }>
+              onClick={ this.getPreferences.bind(this, (preferences) => this.setState({ preferences }), true) }>
                 Reset Defaults
             </button>
           </div>
