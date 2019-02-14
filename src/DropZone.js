@@ -26,7 +26,7 @@ class DropZone extends React.Component {
   onChange(e) {
     const files = e.target.files
     for (let i = 0; i < files.length; i++) {
-      if (files[i].type === this.props.accept)
+      if (this.props.accept.split(',').indexOf(files[i].type) > -1)
         this.addFile(files[i].path, () => {
           if (this.props.onChange)
             this.props.onChange(this.state.files)

@@ -60,7 +60,7 @@ class Transcode extends Component {
   render() {
     return (
       <div className="w-75 mx-auto mt-5">
-        <DropZone accept="video/quicktime" caption="Transcode" onSubmit={ this.onSubmit.bind(this) } onChange={ this.onDropzoneChange.bind(this) }/>
+        <DropZone accept="video/quicktime,video/mp4" caption="Transcode" onSubmit={ this.onSubmit.bind(this) } onChange={ this.onDropzoneChange.bind(this) }/>
         <div className={`mt-5 mx-auto ${(this.state.formHidden && "d-none") || ""}`}>
           <h3>Options</h3>
           <form>
