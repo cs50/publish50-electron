@@ -27,6 +27,13 @@ module.exports = function (ipc, currentWindow, preferences, queues) {
     })
   })
 
+  ipc.on('audio waveform', (event, data) => {
+    const { videoPath, height, width } = data
+    queues['audio waveform'].add('audio waveform', {
+      videoPath, height, width
+    })
+  })
+
   ipc.on('transcode', (event, data) => {
     const { files, formats, rasters, passes } = data
     new Set(files).forEach((videoPath) => {

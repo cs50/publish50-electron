@@ -1,7 +1,7 @@
 module.exports = function (preferences) {
   const path = require('path')
   const Queue = require('bull')
-  const queueNames = [ 'image processing', 'video transcoding', 'metadata' ]
+  const queueNames = [ 'image processing', 'video transcoding', 'metadata', 'audio waveform' ]
   const queues = {}
 
   const jobsPath = path.join(__dirname, 'jobs')
@@ -31,6 +31,12 @@ module.exports = function (preferences) {
     'transcode',
     preferences.get('general.videoTranscodingWorkers'),
     path.join(jobsPath, '/transcode.js')
+  )
+
+  queues['audio waveform'].process(
+    'audio waveform',
+    4,
+     path.join(jobsPath, 'audioWaveform.js')
   )
 
   return {
