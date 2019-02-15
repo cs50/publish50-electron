@@ -1,7 +1,7 @@
 module.exports = function (preferences) {
   const path = require('path')
   const Queue = require('bull')
-  const queueNames = [ 'image processing', 'video transcoding', 'metadata', 'audio waveform' ]
+  const queueNames = [ 'image processing', 'video transcoding', 'metadata', 'audio waveform', 'black scene detect' ]
   const queues = {}
 
   const jobsPath = path.join(__dirname, 'jobs')
