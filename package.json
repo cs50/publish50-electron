@@ -54,6 +54,14 @@
     ],
     "directories": {
       "buildResources": "assets"
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "build/icons/512x512.png",
+      "target": "dmg"
+    },
+    "linux": {
+      "icon": "build/icons/512x512.png"
     }
   },
   "homepage": "./"
