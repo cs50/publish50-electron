@@ -34,6 +34,13 @@ module.exports = function (ipc, currentWindow, preferences, queues) {
     })
   })
 
+  ipc.on('black scene detect', (event, data) => {
+    const { videoPath, minDuration, blackLevel } = data
+    queues['black scene detect'].add('black scene detect', {
+      videoPath, minDuration, blackLevel
+    })
+  })
+
   ipc.on('transcode', (event, data) => {
     const { files, formats, rasters, passes } = data
     new Set(files).forEach((videoPath) => {

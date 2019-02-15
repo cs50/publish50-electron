@@ -39,6 +39,12 @@ module.exports = function (preferences) {
      path.join(jobsPath, 'audioWaveform.js')
   )
 
+  queues['black scene detect'].process(
+    'black scene detect',
+    4,
+     path.join(jobsPath, 'blackSceneDetect.js')
+  )
+
   return {
     queues,
     close() {

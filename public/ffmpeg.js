@@ -17,12 +17,13 @@ async function ffprobe(videoPath) {
     try {
         const { stdout, stderr } = await execFile(
             '/usr/local/bin/ffprobe',
-      ['-loglevel', 'quiet',
-      '-print_format', 'json',
-      '-select_streams', 'v:0',
-      '-show_entries',
-      'stream=duration,height,width',
-      videoPath]
+            ['-loglevel', 'quiet',
+                '-print_format', 'json',
+                '-select_streams', 'v:0',
+                '-show_entries',
+                'stream=duration,height,width',
+                videoPath
+            ]
         )
 
         metadata = JSON.parse(stdout).streams[0]
@@ -39,6 +40,9 @@ async function ffprobe(videoPath) {
 
 async function ffmpegProgress(videoPath, child, callback) {
     let metadata
+    let progress = {}
+    let blackDetected = {}
+
     try {
         metadata = await ffprobe(videoPath)
     } catch (err) {
@@ -46,8 +50,38 @@ async function ffmpegProgress(videoPath, child, callback) {
     }
 
     const msDuration = metadata.duration * 1000000
-    let progress = {}
+
+
     let lines = ''
+    // handle blackscene detect from stderr (couldn't find a way around this)
+    child.stderr.on('data', (chunk) => {
+        lines += chunk.toString()
+        lines.split('\n').filter(line => line).forEach(line => {
+            // handle black scene detection
+
+            if (line.startsWith('[blackdetect @')) {
+                // [blackdetect @ 0x7ff011b01580] black_start:68.8605 black_end:129.129 black_duration:60.2685
+                
+                // parse the line for start, end, and duration
+                line.split(' ').filter(blackSceneInfo => blackSceneInfo).forEach(blackSceneInfo => {
+                    if (blackSceneInfo.startsWith('black_start')){
+                        blackDetected.start = blackSceneInfo.split(':')[1]
+                    } else if (blackSceneInfo.startsWith('black_end')){
+                        blackDetected.end = blackSceneInfo.split(':')[1]
+                    } else if (blackSceneInfo.startsWith('black_duration')){
+                        blackDetected.duration = blackSceneInfo.split(':')[1]
+                    } else {
+                        return
+                    }
+                })
+                callback('blackDetected', blackDetected)
+                blackDetected = {}
+                return
+            }
+        })
+        lines = ''
+    })
+
     child.stdout.on('data', (chunk) => {
         lines += chunk.toString()
         if (!lines.endsWith('\n'))
@@ -57,8 +91,7 @@ async function ffmpegProgress(videoPath, child, callback) {
             const [key, val] = line.split('=')
             if (key === 'progress') {
                 progress.percent = Math.min(Math.round((progress.out_time_ms * 100 / msDuration)), 100)
-                // emitter.emit('progress', progress)
-                callback(progress)
+                callback('progress', progress)
                 progress = {}
                 return
             }
@@ -250,6 +283,36 @@ function ffmpeg(videoPath) {
             ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
             child.stderr.on('data', (err) => console.error(err.toString()))
             child.on('exit', (code, signal, tempImageFile) => {
+                emitter.off('abort', kill)
+                emitter.emit('end', { code, signal })
+            })
+
+            return emitter
+        },
+
+        async blackSceneDetect(options) {
+            // ffmpeg -i lecture9burned.mp4 -vf "blackdetect=d=1:pix_th=0.00" -an -f null - 2>&1 | grep blackdetect > output.txt
+            const emitter = new FFMPEGEmitter()
+            const { blackLevel, minDuration } = options
+
+            const args = [
+                '-i', videoPath,
+                '-y',
+                '-loglevel', 'info',
+                '-vf', 'blackdetect=d=' + minDuration + ':pix_th=' + blackLevel,
+                '-an', '-f', 'null', '-progress', '-', '/dev/null'
+            ]
+
+            const child = spawn('/usr/local/bin/ffmpeg', args)
+            const kill = () => child.kill
+            emitter.once('abort', kill)
+
+            // need to parse the output HERE
+            ffmpegProgress(videoPath, child, (event, data) => emitter.emit(event, data))
+            
+            // stderr still used for black scene detect
+            child.stderr.on('data', (err) => console.error(err.toString()))
+            child.on('exit', (code, signal) => {
                 emitter.off('abort', kill)
                 emitter.emit('end', { code, signal })
             })
