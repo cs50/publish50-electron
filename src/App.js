@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import { BrowserRouter, NavLink, Route } from 'react-router-dom'
+import { HashRouter, NavLink, Route } from 'react-router-dom'
 
 import './App.css';
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-// import 'popper.js/dist/popper.min.js'
 
 import logo from './assets/images/logo-dark.svg'
 
@@ -19,7 +18,7 @@ import Preferences from './Preferences'
 class App extends Component {
   render() {
     return (
-      <BrowserRouter>
+      <HashRouter>
         <div className="h-100">
           <nav className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
             <NavLink to="/" className="navbar-brand"><img className="logo p-1 rounded-circle" src={ logo } alt="publish50" /></NavLink>
@@ -85,7 +84,7 @@ class App extends Component {
 
           </script>
         </div>
-      </BrowserRouter>
+      </HashRouter>
     );
   }
 }
