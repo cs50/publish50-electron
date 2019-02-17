@@ -3,10 +3,48 @@ const path = require('path')
 const redis = require('redis')
 const url = require('url')
 
+const util = require('util')
+const childProcess = require('child_process')
+const execFile = util.promisify(childProcess.execFile)
+
 const preferences = require('./preferences')(app.getVersion())
+const { getBin } = require('./util')
 
 let mainWindow
 let queues
+
+async function startRedis() {
+  const redisPort = preferences.get('general.redisPort')
+  await execFile(getBin('redis-server'), [ '--daemonize', 'yes', '--port', redisPort ])
+  try {
+    await new Promise((resolve, reject) => {
+      let retries = 3
+      const interval = setInterval(async () => {
+        let { stdout, stderr } = (await execFile(getBin('redis-cli'), [ '-p', redisPort, 'ping']))
+        console.log(stdout, stderr)
+        retries--
+        if (stdout.trim() === 'PONG') {
+          clearInterval(interval)
+          resolve(stdout)
+        }
+        else if (retries <= 0) {
+          clearInterval(interval)
+          reject(stderr)
+        }
+      }, 1000)
+    })
+  }
+  catch(err) {
+    console.error(err)
+    dialog.showMessageBox({
+      type: 'error',
+      buttons: [ 'OK' ],
+      message: 'Failed to connect to redis server',
+      detail: `Are you sure port ${redisPort} is available? Try killing any process listening on port ${redisPort} or changing redis port from Preferences, restart publish50, and try again!`
+    })
+  }
+}
+
 function initialize(queues) {
   mainWindow = new BrowserWindow({
     width: 1600,
@@ -26,7 +64,19 @@ function initialize(queues) {
   })
 }
 
-app.on('ready', () => {
+app.on('ready', async () => {
+  try {
+    await startRedis()
+  }
+  catch (err) {
+    console.error(err)
+    dialog.showMessageBox({
+      type: 'error',
+      buttons: [ 'OK' ],
+      message: 'Failed to start redis server',
+      detail: err.toString()
+    })
+  }
   queues = require('./queues')(preferences)
   initialize(queues)
   require('./ipc')(ipc, () => mainWindow, dialog, preferences, queues.queues)

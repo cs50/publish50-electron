@@ -8,19 +8,9 @@ const spawn = childProcess.spawn
 const EventEmitter = require('events')
 
 const { rasters, codecs } = require('./constants')
+const { getBin } = require('./util')
 
 class FFMPEGEmitter extends EventEmitter {}
-
-function getBin(bin) {
-  // TODO check if there's a better way to reference process.resourcesPath
-  // from sandboxed process
-  return path.join(
-    path.dirname(process.env.ELECTRON_DEV ? __dirname : path.dirname(path.dirname(__dirname))),
-    'bin',
-    process.platform === 'darwin' ? 'mac' : 'linux',
-    bin
-  )
-}
 
 async function ffprobe(videoPath) {
   let metadata
