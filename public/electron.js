@@ -21,7 +21,6 @@ async function startRedis() {
       let retries = 3
       const interval = setInterval(async () => {
         let { stdout, stderr } = (await execFile(getBin('redis-cli'), [ '-p', redisPort, 'ping']))
-        console.log(stdout, stderr)
         retries--
         if (stdout.trim() === 'PONG') {
           clearInterval(interval)
