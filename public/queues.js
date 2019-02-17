@@ -1,6 +1,9 @@
 module.exports = function (preferences) {
   const path = require('path')
   const Queue = require('bull')
+
+  const log = require('./log')
+
   const queueNames = [ 'image processing', 'video transcoding', 'metadata' ]
   const queues = {}
 
@@ -15,7 +18,7 @@ module.exports = function (preferences) {
       })
     }
     catch (err) {
-      console.error(err.toString())
+      log.error(err.toString())
     }
   })
 
@@ -45,7 +48,7 @@ module.exports = function (preferences) {
 
         // Close queues
         queue.close().catch((err) => {
-          console.error(err.toString())
+          log.error(err.toString())
         })
       })
     }

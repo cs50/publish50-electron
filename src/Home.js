@@ -159,9 +159,9 @@ class Home extends Component {
     const pending = this.state.pending
     const finished = this.state.finished
     return (
-      <div className="mt-3 container-fluid">
-        <div className="row">
-          <div className="col-lg">
+      <div className="mt-3 d-flex w-100 p-3">
+        <div className="row flex-grow-1">
+          <div className="col-lg-8">
             <div className="row">
               <div className="col">
                 <h3>Running</h3>
@@ -208,7 +208,7 @@ class Home extends Component {
               }
             </div>
           </div>
-          <div className="col-lg">
+          <div className="col-lg-4 border-left">
             <div className="mt-sm-5 mt-lg-0">
               <div>
                 <div className="row">

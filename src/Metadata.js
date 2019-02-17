@@ -2,11 +2,11 @@ import React, { Component } from 'react'
 import Autocomplete from 'react-autocomplete'
 import AWS from 'aws-sdk'
 
+import * as log from './log'
 import './Metadata.css'
 
 const ipc = window.require('electron').ipcRenderer
 
-// const prefs = ipc.sendSync('get preferences')
 let s3Client, Bucket
 ipc.send('get preferences')
 ipc.once('preferences', (event, prefs) => {
@@ -31,7 +31,7 @@ class Metadata extends Component {
   getPrefixes(Prefix) {
     s3Client.listObjectsV2({Bucket, Prefix, MaxKeys: 10, Delimiter: '/'}, (err, data) => {
       if (err) {
-        console.error(err)
+        log.error(err)
         this.setState({ prefixes: this.getPrefixes() })
       }
       else {

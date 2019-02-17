@@ -7,6 +7,7 @@ const util = require('util')
 const childProcess = require('child_process')
 const execFile = util.promisify(childProcess.execFile)
 
+const log = require('./log')
 const preferences = require('./preferences')(app.getVersion())
 const { getBin } = require('./util')
 
@@ -34,7 +35,7 @@ async function startRedis() {
     })
   }
   catch(err) {
-    console.error(err)
+    log.error(err)
     dialog.showMessageBox({
       type: 'error',
       buttons: [ 'OK' ],
@@ -68,7 +69,7 @@ app.on('ready', async () => {
     await startRedis()
   }
   catch (err) {
-    console.error(err)
+    log.error(err)
     dialog.showMessageBox({
       type: 'error',
       buttons: [ 'OK' ],

@@ -8,6 +8,7 @@
     "aws-sdk": "^2.401.0",
     "bootstrap": "^4.2.1",
     "bull": "^3.6.0",
+    "electron-log": "^3.0.1",
     "electron-settings": "^3.2.0",
     "electron-updater": "^4.0.6",
     "fs-extra": "^7.0.1",
@@ -63,7 +64,6 @@
     "linux": {
       "icon": "build/icons/512x512.png",
       "target": "AppImage"
-
     }
   },
   "homepage": "./"
