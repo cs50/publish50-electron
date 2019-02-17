@@ -2,6 +2,7 @@ const path = require('path')
 const AWS = require('aws-sdk')
 module.exports = function (job) {
   return new Promise((resolve, reject) => {
+    // TODO PULL WHAT'S IN S3 FIRST
     const { accessKeyId, secretAccessKey, bucket, prefix, metadata} = job.data
     const s3Client = new AWS.S3({
       accessKeyId,

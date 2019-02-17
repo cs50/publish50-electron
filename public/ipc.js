@@ -1,11 +1,12 @@
-module.exports = function (ipc, currentWindow, preferences, queues) {
+module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
+
   const { rasters } = require('./constants')
 
   function sendToCurrentWindow(event, data) {
-    if (!currentWindow)
+    if (!getCurrentWindow())
       return false
 
-    currentWindow.send(event, data)
+    getCurrentWindow().send(event, data)
     return true
   }
 

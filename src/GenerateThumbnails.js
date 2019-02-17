@@ -11,7 +11,7 @@ class GenerateThumbnails extends Component {
   render() {
     return (
       <div className="w-75 mx-auto mt-5">
-        <DropZone accept="video/quicktime" caption="Generate" onSubmit={ onSubmit }/>
+        <DropZone accept=".mov,.mp4" caption="Generate" onSubmit={ onSubmit }/>
       </div>
     );
   }

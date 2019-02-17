@@ -12,7 +12,7 @@ class ResizeStills extends Component {
   render() {
     return (
       <div className="w-75 mx-auto mt-5">
-        <DropZone accept="image/png" caption="Resize" onSubmit={ onSubmit }/>
+        <DropZone accept=".png" caption="Resize" onSubmit={ onSubmit }/>
       </div>
     );
   }

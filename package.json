@@ -8,7 +8,6 @@
     "aws-sdk": "^2.401.0",
     "bootstrap": "^4.2.1",
     "bull": "^3.6.0",
-    "electron-is-dev": "^1.0.1",
     "electron-settings": "^3.2.0",
     "electron-updater": "^4.0.6",
     "fs-extra": "^7.0.1",
@@ -27,7 +26,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && ELECTRON_DEV=1 electron .\"",
     "electron-pack": "yarn build && build -c.extraMetadata.main=build/electron.js"
   },
   "eslintConfig": {
@@ -47,11 +46,12 @@
   },
   "main": "public/electron.js",
   "build": {
-    "appId": "io.cs50.publish",
+    "productName": "publish50",
     "files": [
       "build/**/*",
       "node_modules/**/*"
     ],
+    "extraFiles": "bin/**/*",
     "directories": {
       "buildResources": "assets"
     },
@@ -61,7 +61,9 @@
       "target": "dmg"
     },
     "linux": {
-      "icon": "build/icons/512x512.png"
+      "icon": "build/icons/512x512.png",
+      "target": "AppImage"
+
     }
   },
   "homepage": "./"

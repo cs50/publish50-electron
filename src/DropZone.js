@@ -26,11 +26,12 @@ class DropZone extends React.Component {
   onChange(e) {
     const files = e.target.files
     for (let i = 0; i < files.length; i++) {
-      if (this.props.accept.split(',').indexOf(files[i].type) > -1)
+      if (this.props.accept.split(',').some((ext) => files[i].name.endsWith(ext))) {
         this.addFile(files[i].path, () => {
           if (this.props.onChange)
             this.props.onChange(this.state.files)
         })
+      }
     }
 
 
@@ -46,7 +47,8 @@ class DropZone extends React.Component {
     e.target.classList.remove('drag-enter')
     const items = e.dataTransfer.items
     for (let i = 0; i < items.length; i++) {
-      if (items[i].kind === 'file' && this.props.accept.split(',').indexOf(items[i].type) > -1)
+      console.log(items[i])
+      if (items[i].kind === 'file' && this.props.accept.split(',').some((ext) => items[i].name.endsWith(ext)))
         this.addFile(items[i].getAsFile().path, () => {
           if (this.props.onChange)
             this.props.onChange(this.state.files)

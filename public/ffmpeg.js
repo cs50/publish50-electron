@@ -2,7 +2,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const util = require('util')
 const childProcess = require('child_process')
-const exec = util.promisify(childProcess.exec)
+const execFile = util.promisify(childProcess.execFile)
 const spawn = childProcess.spawn
 
 const EventEmitter = require('events')
@@ -11,18 +11,30 @@ const { rasters, codecs } = require('./constants')
 
 class FFMPEGEmitter extends EventEmitter {}
 
+function getBin(bin) {
+  // TODO check if there's a better way to reference process.resourcesPath
+  // from sandboxed process
+  return path.join(
+    path.dirname(process.env.ELECTRON_DEV ? __dirname : path.dirname(path.dirname(__dirname))),
+    'bin',
+    process.platform === 'darwin' ? 'mac' : 'linux',
+    bin
+  )
+}
+
 async function ffprobe(videoPath) {
   let metadata
 
   try {
-    const { stdout, stderr } = await exec(
-      `ffprobe \
-      -loglevel quiet \
-      -print_format json \
-      -select_streams v:0 \
-      -show_entries \
-      'stream=duration,height,width' \
-      ${videoPath}`
+    const { stdout, stderr } = await execFile(
+      getBin('ffprobe'),
+      [
+        '-loglevel', 'quiet',
+        '-print_format', 'json',
+        '-select_streams', 'v:0',
+        '-show_entries', 'stream=duration,height,width',
+        videoPath
+      ]
     )
 
     metadata = JSON.parse(stdout).streams[0]
@@ -101,7 +113,7 @@ function ffmpeg(videoPath) {
         destination
       ]
 
-      const child = spawn('ffmpeg', args)
+      const child = spawn(getBin('ffmpeg'), args)
       const kill = () => child.kill
       emitter.once('abort', kill)
       child.stderr.on('data', (err) => console.error(err.toString()))
@@ -139,7 +151,7 @@ function ffmpeg(videoPath) {
             outFile
           )
 
-          child = spawn('ffmpeg', args)
+          child = spawn(getBin('ffmpeg'), args)
           const kill = () => child.kill()
           emitter.once("abort", kill)
           child.stderr.on('data', (err) => console.error(err.toString()))
@@ -188,7 +200,7 @@ function ffmpeg(videoPath) {
               return resolve(false)
             }
 
-            child = spawn('ffmpeg', [ ...args, '-pass', '1', '-an', '/dev/null' ])
+            child = spawn(getBin('ffmpeg'), [ ...args, '-pass', '1', '-an', '/dev/null' ])
             const kill = () => child.kill()
             emitter.once("abort", kill)
             child.stderr.on('data', (err) => console.error(err.toString()))
@@ -204,7 +216,7 @@ function ffmpeg(videoPath) {
             })
           })
           .then((previousPass) => {
-            child = spawn('ffmpeg', [
+            child = spawn(getBin('ffmpeg'), [
               ...args,
               '-pass', previousPass ? '2' : '1',
               '-ac', '2',

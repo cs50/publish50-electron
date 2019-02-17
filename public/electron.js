@@ -1,6 +1,4 @@
 const { app, BrowserWindow, dialog, ipcMain: ipc } = require('electron')
-const { exec } = require('child_process')
-const isDev = require('electron-is-dev')
 const path = require('path')
 const redis = require('redis')
 const url = require('url')
@@ -8,6 +6,7 @@ const url = require('url')
 const preferences = require('./preferences')(app.getVersion())
 
 let mainWindow
+let queues
 function initialize(queues) {
   mainWindow = new BrowserWindow({
     width: 1600,
@@ -16,22 +15,21 @@ function initialize(queues) {
     show: false
   })
 
-  mainWindow.loadURL(isDev ?
+  mainWindow.loadURL(process.env.ELECTRON_DEV ?
     'http://localhost:3000' :
     `file://${path.join(__dirname, '../build/index.html')}`
   )
 
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
   mainWindow.on('closed', () => {
-    queues.close()
     mainWindow = null
   })
 }
 
 app.on('ready', () => {
-  const queues = require('./queues')(preferences)
+  queues = require('./queues')(preferences)
   initialize(queues)
-  require('./ipc')(ipc, mainWindow, preferences, queues.queues)
+  require('./ipc')(ipc, () => mainWindow, dialog, preferences, queues.queues)
 })
 
 app.on('window-all-closed', () => {
@@ -42,6 +40,8 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    initialize()
+    initialize(queues)
   }
 })
+
+app.on('quit', () => queues.close())
