@@ -58,13 +58,23 @@
     },
     "mac": {
       "category": "public.app-category.video",
-      "icon": "build/icons/512x512.png",
-      "target": "dmg"
+      "icon": "build/icons/512x512.png"
     },
     "linux": {
-      "icon": "build/icons/512x512.png",
-      "target": "AppImage"
+      "icon": "build/icons/512x512.png"
     }
   },
-  "homepage": "./"
+  "homepage": "./",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cs50/publish50-electron.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cs50/publish50-electron/issues"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "CS50"
+  }
 }

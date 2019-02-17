@@ -9,6 +9,7 @@ const execFile = util.promisify(childProcess.execFile)
 
 const log = require('./log')
 const preferences = require('./preferences')(app.getVersion())
+const updater = require('./updater')
 const { getBin } = require('./util')
 
 let mainWindow
@@ -65,6 +66,10 @@ function initialize(queues) {
 }
 
 app.on('ready', async () => {
+
+  // Download update, install when the app quits
+  updater.checkForUpdatesAndNotify()
+
   try {
     await startRedis()
   }

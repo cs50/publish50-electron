@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 
 import './Preferences.css'
-import checkForUpdatesIcon from './assets/images/check_for_updates.svg'
 
 const ipc = window.require('electron').ipcRenderer
 class Preferences extends Component {
@@ -321,7 +320,6 @@ class Preferences extends Component {
 
                 <div className="col-5">
                   <small>0.1.0</small>
-                  <img className="ml-2 check-for-updates" src={ checkForUpdatesIcon } alt="Check for updates" title="Check for updates"/>
                 </div>
 
               </div>
