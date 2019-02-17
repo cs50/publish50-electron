@@ -1,0 +1,12 @@
+language: node_js
+cache: yarn
+matrix:
+  include:
+    - os: linux
+    - os: osx
+install: yarn
+script: yarn dist
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: yarn release 

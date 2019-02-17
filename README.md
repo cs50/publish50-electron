@@ -12,11 +12,11 @@ $ yarn
 #### Run in dev mode
 
 ```
-$ yarn electron-dev
+$ yarn dev
 ```
 
 #### Pack for current platform
 ```
-$ yarn electron-pack
+$ yarn dist
 ```
 

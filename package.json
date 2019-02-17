@@ -27,8 +27,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && ELECTRON_DEV=1 electron .\"",
-    "electron-pack": "yarn build && build -c.extraMetadata.main=build/electron.js"
+    "dev": "concurrently 'BROWSER=none yarn start' 'wait-on http://localhost:3000 && ELECTRON_DEV=1 electron .'",
+    "dist": "yarn build && build -c.extraMetadata.main=build/electron.js",
+    "release": "build -c.extraMetadata.main=build/electron.js"
   },
   "eslintConfig": {
     "extends": "react-app"
