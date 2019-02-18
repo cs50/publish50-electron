@@ -69,8 +69,6 @@ module.exports = function (appVersion) {
       return load(true)
     },
 
-    getAll: settings.getAll.bind(settings),
-
     get: settings.get.bind(settings)
   }
 }

@@ -63,7 +63,28 @@ module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
   })
 
   ipc.on('get preferences', (event, data) => {
-    sendToCurrentWindow('preferences', preferences.load())
+    if (data) {
+      const { preferences: prefs } = data
+      if (prefs && Array.isArray(prefs)) {
+        const rt = {}
+        new Set(prefs).forEach((pref) => {
+          const value = preferences.get(pref)
+          const prefix = pref.split('.')
+          const key = prefix.pop()
+          let cur = rt
+          prefix.forEach((key_) => {
+            cur = cur[key_] || (cur[key_] = {})
+          })
+
+          cur[key] = value
+        })
+
+        event.sender.send('preferences', rt)
+      }
+    }
+    else {
+      event.sender.send('preferences', preferences.load())
+    }
   })
 
   ipc.on('save preferences', (event, data) => {
@@ -71,7 +92,7 @@ module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
   })
 
   ipc.on('reset preferences', (event, data) => {
-    sendToCurrentWindow('preferences', preferences.reset())
+    event.sender.send('preferences', preferences.reset())
   })
 
   ipc.on('get job', async (event, data) => {
