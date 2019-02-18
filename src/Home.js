@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
+import { Redirect, NavLink, Route, Switch } from 'react-router-dom'
 
-import * as path from 'path'
+import JobList from './JobList'
+
+const { ipc } = window
 
 const initialState = {
   active: [],
@@ -8,67 +11,35 @@ const initialState = {
   finished: []
 }
 
-function truncate (s) {
-  // cccccc...ccccccccc
-  if (s.length > 32)
-    return `${s.substring(0, 12)}...${s.substring(s.length - 20)}`
-
-  return s
-}
-
-const ipc = window.require('electron').ipcRenderer
-
-function jobDescription(job) {
-  const { name, data } = job
-  switch(name) {
-    case 'resize still':
-      return (
-        <div>
-          Resize <abbr title={ data.imagePath }>
-            '{ truncate(data.imagePath) }'
-          </abbr> to '{ data.raster }'
-        </div>
-      )
-
-    case 'transcode':
-      if (job.data.format) {
-        return <div>Transcode <abbr
-          title={ data.videoPath }>
-          { truncate(data.videoPath) }
-        </abbr> to { data.format } { data.raster && `(${data.raster})` }</div>
-      }
-
-      return <div>Generate thumbnails for <abbr
-        title={ data.videoPath }>
-        { truncate(data.videoPath) }
-        </abbr>
-      </div>
-
-    case 'update metadata':
-      return <div>Update <abbr title={ path.join(data.bucket || '', data.prefix || '') }>metadata.json</abbr></div>
-
-    default:
-      return <div>Unknown job</div>
-  }
-}
-
 class Home extends Component {
   constructor(props) {
     super(props)
     this.defaultJobLimit = this.props.defaultJobLimit || 10
     this.state = initialState
-    ipc.send('get finished jobs', { limit: this.defaultJobLimit })
-    ipc.on('finished jobs', (event, data) => {
-      this.setState({ finished: data.jobs })
-    })
 
-    ipc.send('get pending jobs', { limit: this.defaultJobLimit })
-    ipc.on('pending jobs', (event, data) => {
-      this.setState({ pending: data.jobs })
-    })
+    this.handleFinishedJobs = this._handleJobs.bind(this, 'finished')
+    this.handlePendingJobs = this._handleJobs.bind(this, 'pending')
+    this.jobFinished = this._jobFinished.bind(this)
+    this.jobStarted = this._jobStarted.bind(this)
+    this.pendingJobChanged = this._jobChanged.bind(this, 'pending')
+    this.jobProgress = this._jobProgress.bind(this)
 
-    ipc.send('get active jobs')
-    ipc.on('active jobs', (event, data) => this.setState({ active: data.jobs }))
+    const types = [
+      // {
+      //   name: 'active',
+      //   handler: this.handleActiveJobs
+      // },
+      {
+        name: 'pending',
+        handler: this.handlePendingJobs,
+      },
+      {
+        name: 'finished',
+        handler: this.handleFinishedJobs
+      }
+    ]
+
+    types.forEach((type) => this.getJobs(type.name, type.handler))
   }
 
   findJobIndex(job, ls) {
@@ -79,17 +50,17 @@ class Home extends Component {
     this.setState(initialState)
   }
 
-  jobFinished(job) {
+  _jobFinished(event, { job }) {
     const active = [ ...this.state.active ]
     const i = this.findJobIndex(job, active)
 
     if (i > -1)
       active.splice(i, 1)
 
-    this.setState({ active }, () => this.jobChanged(job, 'finished'))
+    this.setState({ active }, () => this._jobChanged(job, 'finished'))
   }
 
-  jobChanged(job, stateKey) {
+  _jobChanged(job, stateKey) {
     ipc.send('get job', { job })
     ipc.once('job', (event, job) => {
       let jobs = this.state[stateKey]
@@ -108,49 +79,57 @@ class Home extends Component {
     })
   }
 
-  jobStarted(job) {
+  _handleJobs(key, event, data) {
+    this.setState({ [key]: data.jobs })
+  }
+
+
+  getJobs(type, callback) {
+    ipc.send(`get ${type} jobs`, { limit: this.defaultJobLimit })
+    ipc.once(`${type} jobs`, callback)
+  }
+
+  _jobStarted(event, { job }) {
     const pending = [ ...this.state.pending ]
     const i = this.findJobIndex(job, pending)
 
     if (i > -1)
       pending.splice(i, 1)
 
-    this.setState({ pending }, () => this.jobChanged(job, 'active'))
+    this.setState({ pending }, () => this._jobChanged(job, 'active'))
+  }
+
+  _jobProgress(event, data) {
+    const { job } = data
+    const active = this.state.active
+    const i = this.findJobIndex(job, active)
+    if (i < -1) {
+      active.push(job)
+    }
+    else {
+      active[i] = job
+    }
+
+    this.setState({ active })
   }
 
   componentDidMount() {
-    ipc.on('job succeeded', (event, data) => this.jobFinished(data.job))
-    ipc.on('job failed', (event, data) => this.jobFinished(data.job))
-    ipc.on('job started', (event, data) => this.jobStarted(data.job))
+    ipc.on('job succeeded', this.jobFinished)
+    ipc.on('job failed', this.jobFinished)
+    ipc.on('job started', this.jobStarted)
 
-    ipc.on('job pending', (event, data) => this.jobChanged(data.job, 'pending'))
-    ipc.on('job progress', (event, data) => {
-      const { job } = data
-      const active = this.state.active
-      const i = this.findJobIndex(job, active)
-      if (i < -1) {
-        active.push(job)
-      }
-      else {
-        active[i] = job
-      }
-
-      this.setState({ active })
-    })
+    ipc.on('job pending', this.pendingJobChanged)
+    ipc.on('job progress', this.jobProgress)
   }
 
   componentWillUnmount() {
-    [
-      'finished jobs',
-      'job failed',
-      'job pending',
-      'job progress',
-      'job started',
-      'job succeeded',
-      'pending jobs',
-      'active jobs'
-    ]
-    .forEach((event) => ipc.removeAllListeners(event))
+    ipc.removeListener('finished jobs', this.handleFinishedJobs)
+    ipc.removeListener('pending jobs', this.handlePendingJobs)
+    ipc.removeListener('job succeeded', this.jobFinished)
+    ipc.removeListener('job failed', this.jobFinished)
+    ipc.removeListener('job started', this.jobStarted)
+    ipc.removeListener('job pending', this.pendingJobChanged)
+    ipc.removeListener('job progress', this.jobProgress)
   }
 
   abort(job) {
@@ -158,134 +137,38 @@ class Home extends Component {
   }
 
   render() {
-    const active = this.state.active
-    const pending = this.state.pending
     const finished = this.state.finished
+    const pending = this.state.pending
     return (
-      <div className="mt-3 d-flex w-100 p-3">
-        <div className="row flex-grow-1">
-          <div className="col-lg-8">
-            <div className="row">
-              <div className="col">
-                <h3>Running</h3>
-              </div>
-              <div className="col text-right">
-                { active.length > 0 &&
-                  <button type="button" className="btn btn-link btn-sm">Stop all</button> }
-              </div>
-            </div>
-            <div id="active">
-              <ul className="list-group">
-                {
-                  active.filter((job) => job._progress).map((job) => {
-                    return (
-                      <li className="list-group-item py-3 mt-1" key={ `${job.name}:${job.id}` }>
-                        <button type="button" className="close" aria-label="Close" onClick={ this.abort.bind(this, job) }>
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                        <div className="mb-1">{ jobDescription(job) }</div>
-                        <div className="progress mt-3">
-                          <div
-                            className="progress-bar bg-success"
-                            role="progressbar"
-                            style={ {width: `${job._progress}%`} }
-                            aria-valuenow={ job._progress }
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          >
-                            { job._progress }%
-                          </div>
-                        </div>
-
-                        <small className="mt-2 class text-muted">
-                          Started at {  new Date(job.processedOn).toLocaleString() }
-                        </small>
-                      </li>
-                    )
-                  })
-                }
+        <div className="mt-3 d-flex w-100 p-3">
+          <div className="row flex-grow-1">
+            <div className="col-8 border-right">
+              <ul className="nav nav-tabs">
+                <li className="nav-item">
+                  <button className="btn btn-link nav-link active">Running</button>
+                </li>
               </ul>
-              {
-                active < 1 &&
-                  <div className="text-muted mt-3 text-center">Nothing running</div>
-              }
+              <div className="mt-2 border-right"></div>
             </div>
-          </div>
-          <div className="col-lg-4 border-left">
-            <div className="mt-sm-5 mt-lg-0">
-              <div>
-                <div className="row">
-                  <div className="col">
-                    <h3>Finished</h3>
-                  </div>
-                  <div className="col text-right">
-                    { finished.length > 0 &&
-                    <button type="button" className="btn btn-link btn-sm">Remove all</button> }
-                  </div>
-                </div>
-              </div>
-              <div id="finished">
-                <ul className="list-group">
-                  {
-                    finished.map((job) => {
-                      return (
-                        <li
-                          className={
-                            `mt-1 list-group-item list-group-item-${job.failedReason ? 'danger' : 'success'}`
-                          }
-                          key={ `${job.name}:${job.id}` }
-                          title={ job.failedReason }
-                        >
-                          <div>{ jobDescription(job) }</div>
-                          <small
-                            className="text-dark"
-                          >
-                            { (job.finishedOn &&
-                              `Finished at ${new Date(job.finishedOn).toLocaleString()}`) || 'STALLED'}
-                          </small>
-                        </li>
-                      )
-                    })
-                  }
-                </ul>
-
-                {
-                  finished.length < 1 &&
-                    <div className="text-muted mt-3 text-center">Nothing finished</div>
-                }
-              </div>
-
-            </div>
-            <div className="mt-3">
-              <h3>Scheduled</h3>
-              <div id="scheduled">
-                <ul className="list-group">
-                  {
-                    pending.map((job) => {
-                      return (
-                        <li
-                          className="list-group-item list-group-item-warning"
-                          key={ `${job.name}:${job.id}` }
-                        >
-                          { jobDescription(job) }
-                          <small className="mt-2 class text-muted">
-                            Received at {  new Date(job.timestamp).toLocaleString() }
-                          </small>
-                        </li>
-                      )
-                    })
-                  }
-                </ul>
-
-                {
-                  this.state.pending.length < 1&&
-                    <div className="text-muted mt-3 text-center">Nothing scheduled</div>
-                }
+            <div className="col-4">
+              <ul className="nav nav-tabs">
+                <li className="nav-item">
+                  <NavLink to="/home/finished" className="nav-link">Finished</NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/home/pending" className="nav-link">Pending</NavLink>
+                </li>
+              </ul>
+              <div className="mt-2">
+                <Switch>
+                  <Route path="/home/finished" component={ () => { return <JobList jobs={ finished } /> } } />
+                  <Route path="/home/pending" component={ () => { return <JobList jobs={ pending } /> } } />
+                  <Redirect to="/home/finished" />
+                </Switch>
               </div>
             </div>
           </div>
         </div>
-      </div>
     );
   }
 }

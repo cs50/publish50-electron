@@ -4,7 +4,7 @@ import AWS from 'aws-sdk'
 
 import './App.css';
 
-import * as log from './log'
+import * as logger from './logger'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -19,7 +19,7 @@ import Transcode from './Transcode'
 import Preferences from './Preferences'
 
 
-const { ipcRenderer: ipc, remote, shell } = window.require('electron')
+const { ipc, dialog, openExternal } = window
 
 class App extends Component {
   constructor(props) {
@@ -39,14 +39,14 @@ class App extends Component {
       },
       async (err, data) => {
         if (err) {
-          remote.dialog.showMessageBox({
+          dialog.showMessageBox({
             type: 'error',
             buttons: [ 'OK' ],
             message: 'Failed to assume role',
             detail: err.toString()
           })
 
-          return log.error(err)
+          return logger.error(err)
         }
 
         const { Credentials } = data
@@ -69,7 +69,8 @@ class App extends Component {
         ).then((result) => result.json())
 
         const destination = encodeURIComponent(`https://s3.console.aws.amazon.com/s3/buckets/${bucket}/?region=${region}&tab=overview`)
-        shell.openExternal(
+        // shell.openExternal(
+        openExternal(
           'https://signin.aws.amazon.com/federation?' +
           'Action=login&' +
           'Issuer=cs50.io&' +
@@ -147,11 +148,12 @@ class App extends Component {
           </nav>
           <div className="d-flex h-100 w-100">
             <Route exact path="/" component={ Home } />
-            <Route exact path="/update-metadata" component={ Metadata } />
-            <Route exact path="/resize-stills" component={ ResizeStills } />
-            <Route exact path="/transcode" component={ Transcode } />
-            <Route exact path="/generate-thumbnails" component={ GenerateThumbnails } />
-            <Route exact path="/preferences" component={ Preferences } />
+            <Route path="/home" component={ Home } />
+            <Route path="/update-metadata" component={ Metadata } />
+            <Route path="/resize-stills" component={ ResizeStills } />
+            <Route path="/transcode" component={ Transcode } />
+            <Route path="/generate-thumbnails" component={ GenerateThumbnails } />
+            <Route path="/preferences" component={ Preferences } />
           </div>
           <script>
 

@@ -1,5 +1,6 @@
-const log = require('electron-log')
-log.transports.file.appName = 'publish50'
-log.transports.file.fileName = 'main.log'
+const logger = require('electron-log')
 
-module.exports = log
+logger.transports.file.appName = 'publish50'
+logger.transports.file.fileName = 'main.log'
+
+module.exports = logger
