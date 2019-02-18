@@ -18,7 +18,11 @@ module.exports = function (appVersion) {
     },
     s3: {
       bucket: 'cdn.cs50.net',
-      prefix: ''
+      prefix: '',
+      region: 'us-east-1',
+      durationSeconds: 4 * 60 * 60,
+      roleSessionName: 'publish50',
+      roleArn: 'arn:aws:iam::518640797791:role/publish50Role'
     },
     about: {
       version: appVersion
@@ -59,6 +63,8 @@ module.exports = function (appVersion) {
         defaults.ffmpeg.thumbnailStackSize
 
       preferences.ffmpeg.thumbnailStacksOnly = preferences.ffmpeg.thumbnailStacksOnly && true
+
+      preferences.s3.durationSeconds = parseInt(preferences.s3.durationSeconds) || defaults.s3.durationseconds
 
       settings.setAll(preferences)
     },
