@@ -1,10 +1,10 @@
 import React from 'react'
 import JobDescription from './JobDescription'
-import './JobList.css'
+import './JobsList.css'
 
 import doneIcon from './assets/images/done.svg'
 
-class JobList extends React.Component {
+class JobsList extends React.Component {
   render() {
     return <ul className="list-group job-list">
       {
@@ -13,7 +13,7 @@ class JobList extends React.Component {
           const subtext = job.finishedOn ?
             `${(job.failedReason ? 'Failed ' : 'Finished ')} at ${new Date(job.finishedOn).toLocaleString()}` :
             `Received at ${new Date(job.timestamp).toLocaleString()}`
-          return <li className={ `list-group-item list-group-item-${type}` } key={ `${job.queue.name}:${job.id}` }>
+          return <li className={ `mt-1 list-group-item list-group-item-${type}` } key={ `${job.name}:${job.id}` }>
             <div>
               <JobDescription job={ job } />
             </div>
@@ -45,4 +45,4 @@ class JobList extends React.Component {
   }
 }
 
-export default JobList;
+export default JobsList;

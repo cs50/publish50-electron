@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Redirect, NavLink, Route, Switch } from 'react-router-dom'
 
-import JobList from './JobList'
+import ActiveJobsList from './ActiveJobsList'
+import JobsList from './JobsList'
 
 const { ipc } = window
 
@@ -17,119 +18,57 @@ class Home extends Component {
     this.defaultJobLimit = this.props.defaultJobLimit || 10
     this.state = initialState
 
-    this.handleFinishedJobs = this._handleJobs.bind(this, 'finished')
-    this.handlePendingJobs = this._handleJobs.bind(this, 'pending')
-    this.jobFinished = this._jobFinished.bind(this)
-    this.jobStarted = this._jobStarted.bind(this)
-    this.pendingJobChanged = this._jobChanged.bind(this, 'pending')
-    this.jobProgress = this._jobProgress.bind(this)
+    this.jobChanged = this._jobChanged.bind(this)
+    this.onActiveJobs = this.onJobs.bind(this, 'active')
+    this.onFinishedJobs = this.onJobs.bind(this, 'finished')
+    this.onPendingJobs = this.onJobs.bind(this, 'pending')
+    this.jobChanged()
+  }
 
+  _jobChanged() {
+    this.getJobs('active', this.onActiveJobs)
     const types = [
-      // {
-      //   name: 'active',
-      //   handler: this.handleActiveJobs
-      // },
       {
         name: 'pending',
-        handler: this.handlePendingJobs,
+        handler: this.onPendingJobs
       },
       {
         name: 'finished',
-        handler: this.handleFinishedJobs
+        handler: this.onFinishedJobs
       }
     ]
 
-    types.forEach((type) => this.getJobs(type.name, type.handler))
+    types.forEach((type) => this.getJobs(type.name, this.defaultJobLimit, type.handler))
   }
 
-  findJobIndex(job, ls) {
-    return ls.findIndex((job_) => job_.id === job.id && job_.name === job.name)
+  onJobs(stateKey, event, { jobs }) {
+    this.setState({ [stateKey]: jobs })
   }
 
-  resetState() {
-    this.setState(initialState)
-  }
+  getJobs(type, limit, callback) {
+    if (!callback) {
+      callback = limit
+      limit = undefined
+    }
 
-  _jobFinished(event, { job }) {
-    const active = [ ...this.state.active ]
-    const i = this.findJobIndex(job, active)
-
-    if (i > -1)
-      active.splice(i, 1)
-
-    this.setState({ active }, () => this._jobChanged(job, 'finished'))
-  }
-
-  _jobChanged(job, stateKey) {
-    ipc.send('get job', { job })
-    ipc.once('job', (event, job) => {
-      let jobs = this.state[stateKey]
-      const i = this.findJobIndex(job, jobs)
-      if (i > -1)
-        jobs[i] = job
-      else
-        jobs = [ job, ...jobs ]
-
-      if (jobs.length > this.defaultJobLimit)
-        jobs = jobs.slice(0, this.defaultJobLimit)
-
-      this.setState({
-        [stateKey]: jobs
-      })
-    })
-  }
-
-  _handleJobs(key, event, data) {
-    this.setState({ [key]: data.jobs })
-  }
-
-
-  getJobs(type, callback) {
-    ipc.send(`get ${type} jobs`, { limit: this.defaultJobLimit })
+    ipc.send(`get ${type} jobs`, { limit })
     ipc.once(`${type} jobs`, callback)
   }
 
-  _jobStarted(event, { job }) {
-    const pending = [ ...this.state.pending ]
-    const i = this.findJobIndex(job, pending)
-
-    if (i > -1)
-      pending.splice(i, 1)
-
-    this.setState({ pending }, () => this._jobChanged(job, 'active'))
-  }
-
-  _jobProgress(event, data) {
-    const { job } = data
-    const active = this.state.active
-    const i = this.findJobIndex(job, active)
-    if (i < -1) {
-      active.push(job)
-    }
-    else {
-      active[i] = job
-    }
-
-    this.setState({ active })
-  }
-
   componentDidMount() {
-    ipc.on('job succeeded', this.jobFinished)
-    ipc.on('job failed', this.jobFinished)
-    ipc.on('job started', this.jobStarted)
-
-    ipc.on('job pending', this.pendingJobChanged)
-    ipc.on('job progress', this.jobProgress)
+    ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach(
+      (event) => ipc.on(`job ${event}`, this.jobChanged)
+    )
   }
 
   componentWillUnmount() {
-    ipc.removeListener('finished jobs', this.handleFinishedJobs)
-    ipc.removeListener('pending jobs', this.handlePendingJobs)
-    ipc.removeListener('job succeeded', this.jobFinished)
-    ipc.removeListener('job failed', this.jobFinished)
-    ipc.removeListener('job started', this.jobStarted)
-    ipc.removeListener('job pending', this.pendingJobChanged)
-    ipc.removeListener('job progress', this.jobProgress)
+    ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach((event) => {
+      ipc.removeListener(`job ${event}`, this.jobChanged)
+    })
+
+    ipc.removeListener('active jobs', this.onActiveJobs)
+    ipc.removeListener('finished jobs', this.onFinishedJobs)
+    ipc.removeListener('pending jobs', this.onPendingJobs)
   }
 
   abort(job) {
@@ -137,6 +76,7 @@ class Home extends Component {
   }
 
   render() {
+    const active = this.state.active
     const finished = this.state.finished
     const pending = this.state.pending
     return (
@@ -148,7 +88,9 @@ class Home extends Component {
                   <button className="btn btn-link nav-link active">Running</button>
                 </li>
               </ul>
-              <div className="mt-2 border-right"></div>
+              <div className="mt-2">
+                <ActiveJobsList jobs={ active } />
+              </div>
             </div>
             <div className="col-4">
               <ul className="nav nav-tabs">
@@ -161,8 +103,8 @@ class Home extends Component {
               </ul>
               <div className="mt-2">
                 <Switch>
-                  <Route path="/home/finished" component={ () => { return <JobList jobs={ finished } /> } } />
-                  <Route path="/home/pending" component={ () => { return <JobList jobs={ pending } /> } } />
+                  <Route path="/home/finished" component={ () => { return <JobsList jobs={ finished } /> } } />
+                  <Route path="/home/pending" component={ () => { return <JobsList jobs={ pending } /> } } />
                   <Redirect to="/home/finished" />
                 </Switch>
               </div>
