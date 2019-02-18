@@ -7,18 +7,17 @@ class Preferences extends Component {
   constructor(props) {
     super(props)
     this.state = this.getInitialState()
-    this.getPreferences((preferences) => this.setState({ preferences }))
+
+    this.boundHandlePreferences = this.handlePreferences.bind(this)
+
+    ipc.on('preferences', this.boundHandlePreferences)
+    ipc.send('get preferences')
 
     this.awsSecretAccessKeyRef = React.createRef()
   }
 
-  getPreferences(callback, reset) {
-    if (reset)
-      ipc.send('reset preferences')
-    else
-      ipc.send('get preferences')
-
-    ipc.once('preferences', (event, preferences) => callback(preferences))
+  handlePreferences(event, preferences) {
+    this.setState({ preferences })
   }
 
   getInitialState() {
@@ -61,6 +60,10 @@ class Preferences extends Component {
     const preferences = { ...this.state.preferences }
     preferences.awsCredentials.secretAccessKey = ""
     this.setState({ preferences })
+  }
+
+  componentWillUnmount() {
+    ipc.removeListener('preferences', this.boundHandlePreferences)
   }
 
   render() {
@@ -338,7 +341,7 @@ class Preferences extends Component {
             <button
               type="button"
               className="btn btn-secondary ml-1"
-              onClick={ this.getPreferences.bind(this, (preferences) => this.setState({ preferences }), true) }>
+              onClick={ () => ipc.send('reset preferences') }>
                 Reset Defaults
             </button>
           </div>
