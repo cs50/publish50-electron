@@ -10,39 +10,42 @@ const initialState = {
 
 function truncate (s) {
   // cccccc...ccccccccc
-  if (s.length > 18)
-    return `${s.substring(0, 6)}...${s.substring(s.length - 9)}`
+  if (s.length > 32)
+    return `${s.substring(0, 12)}...${s.substring(s.length - 20)}`
+
+  return s
 }
 
 const ipc = window.require('electron').ipcRenderer
 
 function jobDescription(job) {
-  switch(job.name) {
+  const { name, data } = job
+  switch(name) {
     case 'resize still':
       return (
         <div>
-          Resize <span title={ job.data.imagePath }>
-            '{ truncate(job.data.imagePath) }'
-          </span> to '{ job.data.raster }'
+          Resize <abbr title={ data.imagePath }>
+            '{ truncate(data.imagePath) }'
+          </abbr> to '{ data.raster }'
         </div>
       )
 
     case 'transcode':
       if (job.data.format) {
-        return <div>Transcode <span
-          title={ job.data.videoPath }>
-          { truncate(job.data.videoPath) }
-        </span> to { job.data.format } { job.data.raster && `(${job.data.raster})` }</div>
+        return <div>Transcode <abbr
+          title={ data.videoPath }>
+          { truncate(data.videoPath) }
+        </abbr> to { data.format } { data.raster && `(${data.raster})` }</div>
       }
 
-      return <div>Generate thumbnails for <span
-        title={ job.data.videoPath }>
-        { truncate(job.data.videoPath) }
-        </span>
+      return <div>Generate thumbnails for <abbr
+        title={ data.videoPath }>
+        { truncate(data.videoPath) }
+        </abbr>
       </div>
 
     case 'update metadata':
-      return <div>Update { truncate(path.join(job.data.bucket || '', job.data.prefix || '', 'metadata.json')) }</div>
+      return <div>Update <abbr title={ path.join(data.bucket || '', data.prefix || '') }>metadata.json</abbr></div>
 
     default:
       return <div>Unknown job</div>
