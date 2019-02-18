@@ -42,7 +42,7 @@ function jobDescription(job) {
       </div>
 
     case 'update metadata':
-      return <div>Update { truncate(path.join(job.data.bucket, job.data.prefix, 'metadata.json')) }</div>
+      return <div>Update { truncate(path.join(job.data.bucket || '', job.data.prefix || '', 'metadata.json')) }</div>
 
     default:
       return <div>Unknown job</div>
