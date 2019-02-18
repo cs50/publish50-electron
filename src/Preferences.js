@@ -10,7 +10,7 @@ class Preferences extends Component {
 
     this.boundHandlePreferences = this.handlePreferences.bind(this)
 
-    ipc.on('preferences', this.boundHandlePreferences)
+    ipc.once('preferences', this.boundHandlePreferences)
     ipc.send('get preferences')
 
     this.awsSecretAccessKeyRef = React.createRef()
@@ -137,7 +137,9 @@ class Preferences extends Component {
                   <input
                     id="redisPort"
                     className="form-control form-control-sm"
-                    type="number" min="1"
+                    type="number"
+                    min="1"
+                    max="65535"
                     onChange={ this.onChange.bind(this, 'general.redisPort') }
                     value={ this.state.preferences.general.redisPort } />
                 </div>
@@ -307,11 +309,68 @@ class Preferences extends Component {
                     value={ this.state.preferences.s3.prefix }
                   />
                 </div>
+              </div>
 
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Region</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.region') }
+                    value={ this.state.preferences.s3.region }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Role ARN</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.roleArn') }
+                    value={ this.state.preferences.s3.roleArn }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Role session name</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.roleSessionName') }
+                    value={ this.state.preferences.s3.roleSessionName }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Session duration (s)</small></label>
+                </div>
+
+                <div className="col-2">
+                  <input
+                    className="form-control"
+                    type="number"
+                    min="1"
+                    max="43200"
+                    onChange={ this.onChange.bind(this, 's3.durationSeconds') }
+                    value={ this.state.preferences.s3.durationSeconds }
+                  />
+                </div>
               </div>
             </div>
           </div>
-
 
           <div className="mt-4">
             <h6 className="text-dark border-bottom pb-2">About</h6>
@@ -329,7 +388,6 @@ class Preferences extends Component {
             </div>
           </div>
 
-
           <div className="text-right my-4">
             <button
               type="button"
@@ -346,7 +404,6 @@ class Preferences extends Component {
             </button>
           </div>
         </div>
-
       </div>
     );
   }

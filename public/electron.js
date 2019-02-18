@@ -51,7 +51,8 @@ function initialize(queues) {
     width: 1600,
     height: 900,
     icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
-    show: false
+    show: false,
+    webPreferences: { webSecurity: false }
   })
 
   mainWindow.loadURL(process.env.ELECTRON_DEV ?
