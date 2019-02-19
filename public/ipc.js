@@ -1,7 +1,7 @@
 module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
 
   const { rasters } = require('./constants')
-  const log = require('./log')
+  const logger = require('./logger')
 
   function sendToCurrentWindow(event, data) {
     if (!getCurrentWindow())
@@ -205,7 +205,7 @@ module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
 
   Object.values(queues).forEach((queue) => {
     queue.on('error', (err) => {
-      log.error(err.toString())
+      logger.error(err.toString())
     })
 
     queue.on('waiting', async (jobId) => {

@@ -8,15 +8,17 @@ class JobsList extends React.Component {
   render() {
     // TODO temporarily remove stalled jobs for now
     // show them in separate tab later?
-    const jobs = this.props.jobs.filter((job) => !job.failedReason || (job.failedReason && job.failedReason.indexOf('stalled') === -1))
+    const jobs = this.props.jobs.filter((job) => (job.failedReason || '').toLowerCase().indexOf('stalled') < 0)
     return <ul className="list-group job-list">
       {
         jobs.map((job) => {
-          const type = job.failedReason ? 'danger' : job.finishedOn ? 'success' : 'warning'
-          const subtext = job.finishedOn ?
-            `${(job.failedReason ? 'Failed ' : 'Finished ')} on ${new Date(job.finishedOn).toLocaleString()}` :
-            (job.failedReason ? 'STALLED' : `Received on ${new Date(job.timestamp).toLocaleString()}`)
-          return <li className={ `mt-1 list-group-item list-group-item-${type}` } key={ `${job.name}:${job.id}` }>
+        const { failedReason, finishedOn, timestamp } = job
+        const aborted = failedReason && failedReason === 'ABORTED'
+        const type = aborted ? 'secondary' : (failedReason ? 'danger' : finishedOn ? 'success' : 'warning')
+        const date = failedReason ? new Date(finishedOn) : new Date(timestamp)
+        const subtext = `${aborted ? 'Aborted ' : (failedReason ? 'Failed ' : finishedOn ? 'Finished ' : 'Received ')} on ${date.toLocaleString()}`
+
+          return <li title={ failedReason } className={ `mt-1 list-group-item list-group-item-${type}` } key={ `${job.name}:${job.id}` }>
             <div>
               <JobDescription job={ job } />
             </div>

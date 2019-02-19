@@ -125,7 +125,7 @@ async function transcode(job) {
 
     job_.on('end', (e) => {
       if (e.code !== 0)
-        return reject(`ffmpeg exited with error code ${e.code}`)
+        return reject(new Error(`ffmpeg exited with error code ${e.code}`))
 
       resolve()
     })

@@ -7,7 +7,7 @@ const spawn = childProcess.spawn
 
 const EventEmitter = require('events')
 
-const log = require('./log')
+const logger = require('./logger')
 const { rasters, codecs } = require('./constants')
 const { getBin } = require('./util')
 
@@ -107,7 +107,7 @@ function ffmpeg(videoPath) {
       const child = spawn(getBin('ffmpeg'), args)
       const kill = () => child.kill
       emitter.once('abort', kill)
-      child.stderr.on('data', (err) => log.error(err.toString()))
+      child.stderr.on('data', (err) => logger.info(err.toString()))
       ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
       child.on('exit', (code, signal) => {
         emitter.off('abort', kill)
@@ -145,7 +145,7 @@ function ffmpeg(videoPath) {
           child = spawn(getBin('ffmpeg'), args)
           const kill = () => child.kill()
           emitter.once("abort", kill)
-          child.stderr.on('data', (err) => log.error(err.toString()))
+          child.stderr.on('data', (err) => logger.info(err.toString()))
           ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
           child.on('exit', (code, signal) => {
             emitter.off("abort", kill)
@@ -194,7 +194,7 @@ function ffmpeg(videoPath) {
             child = spawn(getBin('ffmpeg'), [ ...args, '-pass', '1', '-an', '/dev/null' ])
             const kill = () => child.kill()
             emitter.once("abort", kill)
-            child.stderr.on('data', (err) => log.error(err.toString()))
+            child.stderr.on('data', (err) => logger.info(err.toString()))
             ffmpegProgress(videoPath, child, progressHandler.bind(null, 1))
             child.on('exit', (code) => {
               if (code !== 0) {
@@ -217,14 +217,14 @@ function ffmpeg(videoPath) {
 
             const kill = () => child.kill()
             emitter.once("abort", kill)
-            child.stderr.on('data', (err) => log.error(err.toString()))
+            child.stderr.on('data', (err) => logger.info(err.toString()))
             ffmpegProgress(videoPath, child, progressHandler.bind(null, passes))
             child.on('exit', (code) => {
               emitter.off("kill", kill)
               emitter.emit('end', { code })
             })
           })
-          .catch((err) => log.error(err))
+          .catch((err) => logger.error(err))
 
           return emitter
 

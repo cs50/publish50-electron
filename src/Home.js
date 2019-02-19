@@ -25,7 +25,7 @@ class Home extends Component {
     this.jobChanged()
     this.interval = setInterval(() => {
       this.jobChanged()
-    }, 5000)
+    }, 3000)
   }
 
   _jobChanged() {
@@ -80,7 +80,7 @@ class Home extends Component {
                 </li>
               </ul>
               <div className="mt-2">
-                <ActiveJobsList jobs={ active } />
+                <ActiveJobsList jobs={ active } onClose={ this.abort.bind(this) }/>
               </div>
             </div>
             <div className="col-4">

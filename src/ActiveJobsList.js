@@ -10,6 +10,18 @@ class ActiveJobsList extends React.Component {
       {
         progressJobs.map((job) => {
           return <li className="mt-2 list-group-item" key={ `${job.name}:${job.id}` }>
+            <button
+              type="button"
+              className="close"
+              aria-label="Close"
+              onClick={
+                (e) => {
+                  e.target.setAttribute('disabled', true)
+                  this.props.onClose(job)
+                }
+              }>
+              <span aria-hidden="true">&times;</span>
+            </button>
             <div>
               <JobDescription job={ job } />
             </div>
