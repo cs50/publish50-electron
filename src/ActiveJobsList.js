@@ -27,7 +27,7 @@ class ActiveJobsList extends React.Component {
             </div>
 
             <small className="text-secondary">
-              Started at { new Date(job.processedOn).toLocaleString() }
+              Started on { new Date(job.processedOn).toLocaleString() }
             </small>
           </li>
         })

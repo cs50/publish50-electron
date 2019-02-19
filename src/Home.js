@@ -26,49 +26,40 @@ class Home extends Component {
   }
 
   _jobChanged() {
-    this.getJobs('active', this.onActiveJobs)
-    const types = [
-      {
-        name: 'pending',
-        handler: this.onPendingJobs
-      },
-      {
-        name: 'finished',
-        handler: this.onFinishedJobs
-      }
-    ]
+    ['finished', 'pending'].forEach((type) => {
+      ipc.send(`get ${type} jobs`, { limit: this.defaultJobLimit })
+    })
 
-    types.forEach((type) => this.getJobs(type.name, this.defaultJobLimit, type.handler))
+    ipc.send('get active jobs')
   }
 
   onJobs(stateKey, event, { jobs }) {
     this.setState({ [stateKey]: jobs })
   }
 
-  getJobs(type, limit, callback) {
-    if (!callback) {
-      callback = limit
-      limit = undefined
-    }
-
-    ipc.send(`get ${type} jobs`, { limit })
-    ipc.once(`${type} jobs`, callback)
-  }
-
   componentDidMount() {
-    ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach(
-      (event) => ipc.on(`job ${event}`, this.jobChanged)
-    )
+    // ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach(
+    //   (event) => ipc.on(`job ${event}`, this.jobChanged)
+    // )
+
+    ipc.on('active jobs', this.onActiveJobs)
+    ipc.on('finished jobs', this.onFinishedJobs)
+    ipc.on('pending jobs', this.onPendingJobs)
+    //
+    this.interval = setInterval(() => {
+      this.jobChanged()
+    }, 5000)
   }
 
   componentWillUnmount() {
-    ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach((event) => {
-      ipc.removeListener(`job ${event}`, this.jobChanged)
-    })
+    // ['succeeded', 'failed', 'started', 'pending', 'progress'].forEach((event) => {
+    //   ipc.removeListener(`job ${event}`, this.jobChanged)
+    // })
 
     ipc.removeListener('active jobs', this.onActiveJobs)
     ipc.removeListener('finished jobs', this.onFinishedJobs)
     ipc.removeListener('pending jobs', this.onPendingJobs)
+    clearInterval(this.interval)
   }
 
   abort(job) {
