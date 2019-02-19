@@ -1,7 +1,8 @@
-const { shell } = require('electron')
+const { shell, dialog } = require('electron')
 const AWS = require('aws-sdk')
 const fetch = require('node-fetch')
 
+const logger = require('./logger')
 const preferences = require('./preferences')
 
 module.exports = {
