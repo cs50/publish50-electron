@@ -296,4 +296,8 @@ ipc.on('open bucket', (event, data) => {
   s3.openBucket()
 })
 
+ipc.on('publish', (event, data) => {
+
+})
+
 module.exports = { sendToCurrentWindow }
