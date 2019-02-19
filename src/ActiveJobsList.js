@@ -5,9 +5,10 @@ import doneIcon from './assets/images/done.svg'
 
 class ActiveJobsList extends React.Component {
   render() {
+    const progressJobs = this.props.jobs.filter((job) => job._progress)
     return <ul className="list-group">
       {
-        this.props.jobs.map((job) => {
+        progressJobs.map((job) => {
           return <li className="mt-2 list-group-item" key={ `${job.name}:${job.id}` }>
             <div>
               <JobDescription job={ job } />
@@ -34,7 +35,7 @@ class ActiveJobsList extends React.Component {
       }
 
       {
-        this.props.jobs.length < 1 &&
+        progressJobs.length < 1 &&
           <img
             style={
               {

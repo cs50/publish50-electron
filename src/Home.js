@@ -23,6 +23,9 @@ class Home extends Component {
     this.onFinishedJobs = this.onJobs.bind(this, 'finished')
     this.onPendingJobs = this.onJobs.bind(this, 'pending')
     this.jobChanged()
+    this.interval = setInterval(() => {
+      this.jobChanged()
+    }, 5000)
   }
 
   _jobChanged() {
@@ -45,10 +48,6 @@ class Home extends Component {
     ipc.on('active jobs', this.onActiveJobs)
     ipc.on('finished jobs', this.onFinishedJobs)
     ipc.on('pending jobs', this.onPendingJobs)
-    //
-    this.interval = setInterval(() => {
-      this.jobChanged()
-    }, 5000)
   }
 
   componentWillUnmount() {
@@ -70,6 +69,7 @@ class Home extends Component {
     const active = this.state.active
     const finished = this.state.finished
     const pending = this.state.pending
+
     return (
         <div className="mt-3 d-flex w-100 p-3">
           <div className="row flex-grow-1">

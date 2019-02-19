@@ -6,9 +6,12 @@ import doneIcon from './assets/images/done.svg'
 
 class JobsList extends React.Component {
   render() {
+    // TODO temporarily remove stalled jobs for now
+    // show them in separate tab later?
+    const jobs = this.props.jobs.filter((job) => !job.failedReason || (job.failedReason && job.failedReason.indexOf('stalled') === -1))
     return <ul className="list-group job-list">
       {
-        this.props.jobs.map((job) => {
+        jobs.map((job) => {
           const type = job.failedReason ? 'danger' : job.finishedOn ? 'success' : 'warning'
           const subtext = job.finishedOn ?
             `${(job.failedReason ? 'Failed ' : 'Finished ')} on ${new Date(job.finishedOn).toLocaleString()}` :
@@ -25,7 +28,7 @@ class JobsList extends React.Component {
       }
 
       {
-        this.props.jobs.length < 1 &&
+        jobs.length < 1 &&
           <img
             style={
               {
