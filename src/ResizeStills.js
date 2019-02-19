@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import DropZone from './DropZone'
 
-const ipc = window.require('electron').ipcRenderer
+const { ipc } = window
 
 function onSubmit(files) {
   ipc.send('resize stills', { files: Array.from(files) })

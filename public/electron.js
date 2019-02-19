@@ -52,7 +52,10 @@ function initialize(queues) {
     height: 900,
     icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
     show: false,
-    webPreferences: { webSecurity: false }
+    webPreferences: {
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js')
+    }
   })
 
   mainWindow.loadURL(process.env.ELECTRON_DEV ?

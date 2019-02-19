@@ -2,11 +2,10 @@ import React, { Component } from 'react'
 import Autocomplete from 'react-autocomplete'
 import AWS from 'aws-sdk'
 
-import * as log from './log'
+import * as logger from './logger'
 import './Metadata.css'
 
-const electron = window.require('electron')
-const ipc = electron.ipcRenderer
+const { ipc } = window
 
 let controller = new AbortController()
 let signal = controller.signal
@@ -45,7 +44,7 @@ class Metadata extends Component {
       },
       (err, data) => {
         if (err) {
-          log.error(err)
+          logger.error(err)
           this.setState( { s3ClientError: err } )
         }
         else {
