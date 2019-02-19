@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain: ipc } = require('electron')
+const { app, BrowserWindow, dialog } = require('electron')
 const path = require('path')
 const redis = require('redis')
 const url = require('url')
@@ -8,7 +8,7 @@ const childProcess = require('child_process')
 const execFile = util.promisify(childProcess.execFile)
 
 const logger = require('./logger')
-const preferences = require('./preferences')(app.getVersion())
+const preferences = require('./preferences')
 const updater = require('./updater')
 const { getBin } = require('./util')
 
@@ -86,9 +86,9 @@ app.on('ready', async () => {
       detail: err.toString()
     })
   }
-  queues = require('./queues')(preferences)
+  queues = require('./queues')
   initialize(queues)
-  require('./ipc')(ipc, () => mainWindow, dialog, preferences, queues.queues)
+  require('./ipc')
 })
 
 app.on('window-all-closed', () => {

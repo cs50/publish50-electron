@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
 import { HashRouter, NavLink, Route } from 'react-router-dom'
-import AWS from 'aws-sdk'
 
 import './App.css';
-
-import * as logger from './logger'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -18,73 +15,9 @@ import GenerateThumbnails from './GenerateThumbnails'
 import Transcode from './Transcode'
 import Preferences from './Preferences'
 
-
-const { ipc, dialog, openExternal } = window
+const { ipc } = window
 
 class App extends Component {
-  constructor(props) {
-    super(props)
-    this.boundOpenBucket = this.openBucket.bind(this)
-  }
-
-  openBucket(event, preferences) {
-    const { accessKeyId, secretAccessKey } = preferences.awsCredentials
-    const { bucket, durationSeconds, region, roleArn, roleSessionName } = preferences.s3
-    const stsClient = new AWS.STS({ accessKeyId, secretAccessKey })
-    stsClient.assumeRole(
-      {
-        DurationSeconds: durationSeconds,
-        RoleArn: roleArn,
-        RoleSessionName: roleSessionName
-      },
-      async (err, data) => {
-        if (err) {
-          dialog.showMessageBox({
-            type: 'error',
-            buttons: [ 'OK' ],
-            message: 'Failed to assume role',
-            detail: err.toString()
-          })
-
-          return logger.error(err)
-        }
-
-        const { Credentials } = data
-        console.log(Credentials)
-
-        const {
-          AccessKeyId: sessionId,
-          SecretAccessKey: sessionKey,
-          SessionToken: sessionToken
-        } = Credentials
-
-        const session = JSON.stringify({
-          sessionId,
-          sessionKey,
-          sessionToken
-        })
-
-        const { SigninToken } = await fetch(
-          `https://signin.aws.amazon.com/federation?Action=getSigninToken&Session=${encodeURIComponent(session)}`
-        ).then((result) => result.json())
-
-        const destination = encodeURIComponent(`https://s3.console.aws.amazon.com/s3/buckets/${bucket}/?region=${region}&tab=overview`)
-        // shell.openExternal(
-        openExternal(
-          'https://signin.aws.amazon.com/federation?' +
-          'Action=login&' +
-          'Issuer=cs50.io&' +
-          `SigninToken=${SigninToken}&` +
-          `Destination=${destination}`
-        )
-      }
-    )
-  }
-
-  componentWillUnmount() {
-    ipc.removeListener('preferences', this.boundOpenBucket)
-  }
-
   render() {
     return (
       <HashRouter>
@@ -104,12 +37,7 @@ class App extends Component {
                 </li>
 
                 <li className="nav-item">
-                  <button className="btn nav-link pr-0 pl-4" onClick={
-                    () => {
-                      ipc.once('preferences', this.boundOpenBucket)
-                      ipc.send('get preferences', { preferences: [ 'awsCredentials', 's3' ] })
-                    }
-                  }>
+                  <button className="btn nav-link pr-0 pl-4" onClick={ () => ipc.send('open bucket') }>
                     Browse CDN
                     <span className="divider ml-4"></span>
                   </button>
