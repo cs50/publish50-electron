@@ -105,9 +105,53 @@ module.exports = function (ipc, getCurrentWindow, dialog, preferences, queues) {
     }
   })
 
-  ipc.on('abort job', async (event, data) => {
+  ipc.on('abort job', (event, data) => {
     Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
       child.send({__abortJobId__: data.job.id})
+    })
+  })
+
+  ipc.on('abort jobs', (event, data) => {
+    Object.values(queues).forEach((queue) => {
+      Object.values(queue.childPool.retained).forEach((child) => {
+        child.send({__abortJobId__: '__self__'})
+      })
+    })
+  })
+
+  ipc.on('remove job', async(event, data) => {
+    try {
+      const job = await queues[data.job.queue.name].getJob(data.job.id)
+      job.remove()
+    }
+    catch(err) {
+      logger.error(err.toString())
+    }
+  })
+
+  ipc.on('remove jobs', async(event, data) => {
+    const { type } = data
+    let jobLists = []
+    if (type === 'finished') {
+      jobLists.push((queue) => queue.getCompleted(), (queue) => queue.getFailed())
+    }
+    else if (type === 'pending') {
+      jobLists.push((queue) => queue.getWaiting(), (queue) => queue.getDelayed())
+    }
+
+    Object.values(queues).forEach(async (queue) => {
+      try {
+        jobLists.forEach(async (getList) => {
+          const jobList =  (await Object.values(queues).reduce(async (acc, queue) => {
+            return Promise.resolve([ ...(await acc), ...(await getList(queue)) ])
+          }, Promise.resolve([])))
+
+          jobList.forEach((job) => job.remove())
+        })
+      }
+      catch (err) {
+        logger.error(err.toString())
+      }
     })
   })
 

@@ -5,3 +5,15 @@ ul.job-list {
 ul.job-list small {
   font-size: 11px;
 }
+
+.clear-all {
+  position: absolute;
+  top: 2px;
+  right: 0px;
+  opacity: 0.3;
+  cursor: pointer;
+}
+
+.clear-all:hover {
+  opacity: 0.5;
+}

@@ -25,7 +25,7 @@ class Home extends Component {
     this.jobChanged()
     this.interval = setInterval(() => {
       this.jobChanged()
-    }, 3000)
+    }, 1000)
   }
 
   _jobChanged() {
@@ -65,6 +65,18 @@ class Home extends Component {
     ipc.send('abort job', { job })
   }
 
+  abortAll() {
+    ipc.send('abort jobs')
+  }
+
+  removeJob(job) {
+    ipc.send('remove job', { job })
+  }
+
+  onClearAll(type) {
+    ipc.send('remove jobs', { type })
+  }
+
   render() {
     const active = this.state.active
     const finished = this.state.finished
@@ -80,7 +92,7 @@ class Home extends Component {
                 </li>
               </ul>
               <div className="mt-2">
-                <ActiveJobsList jobs={ active } onClose={ this.abort.bind(this) }/>
+                <ActiveJobsList jobs={ active } onClose={ this.abort.bind(this) } onAbortAll={ this.abortAll.bind(this) } />
               </div>
             </div>
             <div className="col-4">
@@ -94,8 +106,30 @@ class Home extends Component {
               </ul>
               <div className="mt-2">
                 <Switch>
-                  <Route path="/home/finished" component={ () => { return <JobsList jobs={ finished } /> } } />
-                  <Route path="/home/pending" component={ () => { return <JobsList jobs={ pending } /> } } />
+                  <Route
+                    path="/home/finished"
+                    component={
+                      () => {
+                        return <JobsList
+                          jobs={ finished }
+                          onClose={ this.removeJob.bind(this) }
+                          onClearAll={ this.onClearAll.bind(this, 'finished') }
+                        />
+                      }
+                    }
+                  />
+
+                  <Route path="/home/pending"
+                    component={
+                      () => {
+                        return <JobsList jobs={ pending }
+                          onClose={ this.removeJob.bind(this) }
+                          onClearAll={ this.onClearAll.bind(this, 'pending') }
+                        />
+                      }
+                    }
+                  />
+
                   <Redirect to="/home/finished" />
                 </Switch>
               </div>
