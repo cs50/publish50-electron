@@ -1,31 +1,18 @@
 import React, { Component } from 'react'
-import Autocomplete from 'react-autocomplete'
-import AWS from 'aws-sdk'
 
-import * as logger from './logger'
+import CDNPath from './CDNPath'
 import './Metadata.css'
 
 const { ipc } = window
 
-let controller = new AbortController()
-let signal = controller.signal
-
 class Metadata extends Component {
-  handlePreferences(event, preferences) {
-    this.setState({ loading: false, preferences, prefix: preferences.s3.prefix })
-    this.s3Client = new AWS.S3({
-      accessKeyId: preferences.awsCredentials.accessKeyId,
-      secretAccessKey: preferences.awsCredentials.secretAccessKey
-    })
-  }
-
   constructor(props) {
     super(props)
     this.state = this.getInitialState()
 
-    this.boundHandlePreferences = this.handlePreferences.bind(this)
+    this.handlePreferences = this._handlePreferences.bind(this)
 
-    ipc.once('preferences', this.boundHandlePreferences)
+    ipc.once('preferences', this.handlePreferences)
     ipc.send('get preferences', {
       preferences: [
         'awsCredentials',
@@ -34,26 +21,8 @@ class Metadata extends Component {
     })
   }
 
-  getPrefixes(Prefix) {
-    this.s3Client.listObjectsV2(
-      {
-        Bucket: this.state.preferences.s3.bucket,
-        Prefix,
-        MaxKeys: 10,
-        Delimiter: '/'
-      },
-      (err, data) => {
-        if (err) {
-          logger.error(err)
-          this.setState( { s3ClientError: err } )
-        }
-        else {
-          this.setState({
-            prefixes: data.CommonPrefixes.map((e) => ({ name: e.Prefix }))
-          })
-        }
-      }
-    )
+  _handlePreferences(event, preferences) {
+    this.setState({ loading: false, preferences, prefix: preferences.s3.prefix })
   }
 
   getInitialState() {
@@ -70,11 +39,6 @@ class Metadata extends Component {
           prefix: ''
         }
       },
-      s3ClientError: '',
-      prefixes: [],
-      prefix: '',
-      prefixesMenuOpen: false,
-      lastMetadataRequest: null,
       metadata: {
         title: "",
         authors: [],
@@ -100,14 +64,14 @@ class Metadata extends Component {
   }
 
   componentWillUnmount() {
-    ipc.removeListener('preferences', this.boundHandlePreferences)
+    ipc.removeListener('preferences', this.handlePreferences)
   }
 
   render() {
-    const preferences = this.state.preferences
+    const { awsCredentials, s3 } = this.state.preferences
     return !this.state.loading && (
       <div className="w-75 mx-auto mt-5">
-        { ((!preferences || !preferences.s3 || !preferences.s3.bucket) &&
+        { ((!this.state.preferences || !s3 || !s3.bucket) &&
         <div className="alert alert-danger" role="alert">Missing CDN bucket.</div>) ||
         <div>
           { this.state.s3ClientError &&
@@ -119,106 +83,23 @@ class Metadata extends Component {
           }
 
           <label>Location</label>
-          <div className="form-group">
-            <div className="input-group mb-2">
-              <div className="input-group-prepend">
-                <div className="input-group-text">{
-                    (preferences.s3.bucket.endsWith('/') &&
-                      preferences.s3.bucket) ||
-                      `${preferences.s3.bucket}/`
-                }</div>
-              </div>
+          <CDNPath
+            awsCredentials={ awsCredentials }
+            bucket={ s3.bucket } i
+            prefix={ s3.prefix }
+            onData={
+              ((metadata) => {
+                if (!metadata.youtube)
+                  metadata.youtube = {}
 
-              <Autocomplete
-                wrapperStyle={
-                  {
-                    position: 'relative',
-                    display: 'inline-block',
-                    flexGrow: '1'
-                  }
-                }
+                this.setState({ metadata })
+              }).bind(this)
+            }
 
-                value={ this.state.prefix }
-                items={ this.state.prefixes }
-                getItemValue={
-                  (item) => item.name
-                }
-
-                onSelect={
-                  (prefix, item) => {
-
-                    // Abort current request for fetching metadata (if any)
-                    controller.abort()
-                    controller = new AbortController()
-                    signal = controller.signal
-
-                    this.getPrefixes(prefix)
-                    this.setState({
-                      prefix,
-                      prefixesMenuOpen: document.activeElement.getAttribute('id') === 'prefixInput',
-                    })
-
-                    fetch(`https://${preferences.s3.bucket}/${prefix}metadata.json`, { signal })
-                    .then((response) => {
-                      if (response.status === 200)
-                        return response.json()
-                    })
-                    .then((metadata) => {
-                      if (metadata)
-                        this.setState({ metadata })
-                    })
-                  }
-                }
-
-                onChange={(event, prefix) => {
-                  this.getPrefixes(prefix)
-                  this.setState({ prefix, prefixesMenuOpen: true, updateDisabled: false })
-                }}
-
-                open={ this.state.prefixesMenuOpen }
-
-                renderMenu={
-                  (children) => (
-                  <div
-                    className="border rounded w-100 bg-white"
-                    style={ { position: 'absolute', zIndex: 1024 } }>
-                      {children}
-                    </div>
-                  )
-                }
-
-                renderInput={
-                  (props) => {
-                    return <input
-                      { ...props }
-                      id="prefixInput"
-                      className="form-control"
-                      placeholder="2019/x/lectures/0"
-                      autoFocus
-                      onBlur={ () => this.setState({ prefixesMenuOpen: false }) }
-                      value={ this.state.prefix }
-                    />
-                  }
-                }
-
-                renderItem={
-                  (item, isHighlighted) => (
-                    <div
-                      key={ item.name }
-                      style={ { padding: '8px 12px' } }
-                      className={isHighlighted ? 'bg-primary text-white' : 'bg-white'}
-                    >
-                      { item.name }
-                    </div>
-                  )
-                }
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-
-          </div>
+            onError={
+              ((s3ClientError) => this.setState({ s3ClientError })).bind(this)
+            }
+          />
 
           <div className="form-group">
             <label>Title</label>
@@ -253,7 +134,7 @@ class Metadata extends Component {
           </div>
 
           <div className="form-group">
-            <label>Author{ (this.state.metadata.authors || []).length > 1 && 's' }</label>
+            <label>Authors</label>
             {
               ((this.state.metadata.authors || []).concat([ "" ])).map((author, index) => {
                 return <input
@@ -293,7 +174,7 @@ class Metadata extends Component {
                         }
                       }
                     >
-                      Remove author
+                      Remove
                     </button>
                   </div>
             }
