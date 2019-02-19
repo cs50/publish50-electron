@@ -10,7 +10,7 @@ class Preferences extends Component {
 
     this.boundHandlePreferences = this.handlePreferences.bind(this)
 
-    ipc.once('preferences', this.boundHandlePreferences)
+    ipc.on('preferences', this.boundHandlePreferences)
     ipc.send('get preferences')
 
     this.awsSecretAccessKeyRef = React.createRef()
