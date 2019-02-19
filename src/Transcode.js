@@ -17,7 +17,7 @@ function getInitialState() {
       '1080p': true,
       '4k': true
     },
-    passes: 2,
+    twoPasses: true,
     formHidden: true
   }
 }
@@ -53,10 +53,6 @@ class Transcode extends Component {
     })
   }
 
-  passesChanged(e) {
-    this.setState({ passes: parseInt(e.target.value) })
-  }
-
   render() {
     return (
       <div className="w-75 mx-auto mt-5">
@@ -88,18 +84,8 @@ class Transcode extends Component {
                   </div>
                 }) }
               </div>
-              <div className="col">
-                <label>How many passes would you like ffmpeg to perform while transcoding to mp4?</label>
-                <select
-                  defaultValue={ this.state.passes }
-                  className="custom-select"
-                  onChange={ this.passesChanged.bind(this) }
-                  disabled={ !this.state.formats.mp4 }>
-                  <option value="1">One</option>
-                  <option value="2">Two (Recommended)</option>
-                </select>
-              </div>
             </div>
+
             <div className="row mt-3">
               <div className="col">
                 <label>
@@ -124,8 +110,26 @@ class Transcode extends Component {
                   })
                 }
               </div>
-              <div className="col">
+            </div>
 
+            <div className="row mt-3">
+              <div className="col">
+                <div className="custom-control custom-switch">
+                  <input
+                    type="checkbox"
+                    className="custom-control-input"
+                    id="twoPasses"
+                    checked={ this.state.twoPasses }
+                    onChange={ (e) => this.setState({ twoPasses: e.target.checked }) }
+                    disabled={ !this.state.formats.mp4 }
+                  />
+
+                  <label
+                    className="custom-control-label"
+                    htmlFor="twoPasses">
+                    Perform two passes <small className="text-muted">(recommended)</small>
+                  </label>
+                </div>
               </div>
             </div>
           </form>

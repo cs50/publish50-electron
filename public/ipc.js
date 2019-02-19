@@ -34,8 +34,8 @@ ipc.on('update metadata', (event, data) => {
   })
 })
 
-ipc.on('transcode', (event, data) => {
-  const { files, formats, rasters, passes } = data
+function transcode(data) {
+  const { files, formats, rasters, twoPasses } = data
   new Set(files).forEach((videoPath) => {
 
     // Generate thumbnails
@@ -61,10 +61,14 @@ ipc.on('transcode', (event, data) => {
     if (formats.mp4) {
       Object.keys(rasters).forEach((raster) => {
         if (rasters[raster])
-          queues['video transcoding'].add('transcode', { videoPath, format: 'mp4', raster, passes })
+          queues['video transcoding'].add('transcode', { videoPath, format: 'mp4', raster, passes: twoPasses ? 2 : 1 })
       })
     }
   })
+}
+
+ipc.on('transcode', (event, data) => {
+  transcode(data)
 })
 
 ipc.on('get preferences', (event, data) => {
