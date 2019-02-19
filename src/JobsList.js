@@ -3,7 +3,7 @@ import JobDescription from './JobDescription'
 import './JobsList.css'
 
 import doneIcon from './assets/images/done.svg'
-import clearIcon from './assets/images/clear.svg'
+import clearIcon from './assets/images/abort_all.svg'
 
 class JobsList extends React.Component {
   render() {
