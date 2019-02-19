@@ -31,12 +31,18 @@ const defaults = {
   }
 }
 
-if (reset || Object.keys(settings.getAll()).length < 1) {
+function setDefaults() {
   settings.setAll(defaults)
   return defaults
 }
 
+if (Object.keys(settings.getAll()).length < 1)
+  setDefaults()
+
 function load(reset) {
+  if (reset)
+    return setDefaults()
+
   const preferences = {}
   Object.keys(defaults).forEach((key) => {
     preferences[key] = settings.get(key, defaults[key])
