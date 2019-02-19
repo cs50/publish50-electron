@@ -88,16 +88,16 @@ class Metadata extends Component {
             bucket={ s3.bucket } i
             prefix={ s3.prefix }
             onData={
-              ((metadata) => {
+              (metadata) => {
                 if (!metadata.youtube)
                   metadata.youtube = {}
 
                 this.setState({ metadata })
-              }).bind(this)
+              }
             }
 
             onError={
-              ((s3ClientError) => this.setState({ s3ClientError })).bind(this)
+              (s3ClientError) => this.setState({ s3ClientError })
             }
           />
 
