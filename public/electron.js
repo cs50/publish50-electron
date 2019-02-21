@@ -22,6 +22,7 @@ async function startRedis() {
     [
       '--daemonize', 'yes',
       '--port', redisPort,
+      '--appendonly', 'yes',
       '--appendfsync', 'everysec'
     ]
   )
