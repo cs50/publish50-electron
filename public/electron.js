@@ -36,7 +36,7 @@ async function startRedis() {
     })
   }
   catch(err) {
-    logger.error(err)
+    logger.error(err.toString())
     dialog.showMessageBox({
       type: 'error',
       buttons: [ 'OK' ],
