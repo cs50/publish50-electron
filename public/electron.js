@@ -17,33 +17,48 @@ let queues
 
 async function startRedis() {
   const redisPort = preferences.get('general.redisPort')
-  await execFile(getBin('redis-server'), [ '--daemonize', 'yes', '--port', redisPort ])
-  try {
-    await new Promise((resolve, reject) => {
-      let retries = 3
-      const interval = setInterval(async () => {
-        let { stdout, stderr } = (await execFile(getBin('redis-cli'), [ '-p', redisPort, 'ping']))
-        retries--
-        if (stdout.trim() === 'PONG') {
-          clearInterval(interval)
-          resolve(stdout)
+  await execFile(
+    getBin('redis-server'),
+    [
+      '--daemonize', 'yes',
+      '--port', redisPort,
+      '--appendfsync', 'everysec'
+    ]
+  )
+
+  return new Promise((resolve, reject) => {
+    const client = redis.createClient({
+      port: redisPort,
+      retry_strategy(options) {
+        if (options.error && options.error.code === 'ECONNREFUSED') {
+          logger.error(options.error)
         }
-        else if (retries <= 0) {
-          clearInterval(interval)
-          reject(stderr)
+
+        if (options.attempt > 3) {
+          const err = new Error(
+            'Are you sure port ${redisPort} is available? Try killing any ' +
+            `process listening on port ${redisPort} or changing redis port ` +
+            'in Preferences, restart publish50, and try again!'
+          )
+
+          reject(err)
+          return err
         }
-      }, 1000)
+
+        // Reconnect after 3 seconds
+        return 3000
+      }
     })
-  }
-  catch(err) {
-    logger.error(err.toString())
-    dialog.showMessageBox({
-      type: 'error',
-      buttons: [ 'OK' ],
-      message: 'Failed to connect to redis server',
-      detail: `Are you sure port ${redisPort} is available? Try killing any process listening on port ${redisPort} or changing redis port from Preferences, restart publish50, and try again!`
+
+    client.once('connect', () => {
+      // Rewrite AOF every minute
+      setInterval(() => {
+        client.bgrewriteaof()
+      }, 60000)
+
+      resolve()
     })
-  }
+  })
 }
 
 function initialize(queues) {
@@ -104,6 +119,7 @@ app.on('ready', async () => {
       detail: err.toString()
     })
   }
+
   queues = require('./queues')
   initialize(queues)
   require('./ipc')
