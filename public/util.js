@@ -12,5 +12,9 @@ module.exports = {
       process.platform === 'darwin' ? 'mac' : 'linux',
       bin
     )
+  },
+
+  distFolder(inputFile) {
+    return path.join(path.dirname(inputFile), '../dist', path.basename(inputFile, path.extname(inputFile)))
   }
 }

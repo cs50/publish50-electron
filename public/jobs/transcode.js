@@ -2,9 +2,7 @@ const path = require('path')
 const { ffmpeg, ffprobe } = require('../ffmpeg')
 const images = require('../images')
 
-function distFolder(videoPath) {
-  return path.join(path.dirname(videoPath), '../dist')
-}
+const { distFolder } = require('../util')
 
 async function generateThumbnails(job) {
   const {
