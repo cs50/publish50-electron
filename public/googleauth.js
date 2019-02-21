@@ -2,6 +2,8 @@ const fetch = require('node-fetch')
 const { BrowserWindow } = require('electron')
 const logger = require('electron-log')
 
+const preferences = require('./preferences')
+
 const CLIENT_ID = '721674863805-3sd3303klbp1rmrhnpb1s619budi16bd.apps.googleusercontent.com'
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const ACCESS_TOKEN_URL = 'https://1cvsdo7ric.execute-api.us-east-1.amazonaws.com/production'
@@ -12,7 +14,7 @@ const SCOPES = [
 ]
 
 module.exports = {
-  getAccessToken() {
+  getAuthCode() {
     return new Promise((resolve, reject) => {
       const win = new BrowserWindow({
         width: 800,
@@ -25,26 +27,17 @@ module.exports = {
 
       win.webContents.on('will-navigate', (event, url_) => {
         const url = new URL(url_)
-        const code = url.searchParams.get('code')
+        const authorizationCode = url.searchParams.get('code')
         const err = url.searchParams.get('error')
 
-        if (code) {
-          // Our API Gateway endpoint
-          fetch(`${ACCESS_TOKEN_URL}?code=${code}`)
-          .then((response) => response.json())
-          .then((response) => {
-            if (response.error) {
-              // Error obtaining access token
-              // TODO show error
-              logger.error(response)
-              reject(response)
+        if (authorizationCode) {
+          preferences.save({
+            googleCredentials: {
+              authorizationCode
             }
-            else {
-              resolve(response)
-            }
-
-            win.close()
           })
+          console.log('CODE', preferences.get('googleCredentials.authorizationCode'))
+          win.close()
         }
         else if (err) {
           // Error obtaining authorization code
@@ -65,5 +58,20 @@ module.exports = {
         `scope=${SCOPES.join(' ')}`
       ))
     })
+  },
+
+  async getAccessToken(authorizationCode) {
+    // Our API Gateway endpoint
+    let response = await fetch(`${ACCESS_TOKEN_URL}?code=${authorizationCode}`)
+    response = await response.json()
+    if (response.error) {
+      // Error obtaining access token
+      // TODO show error
+      logger.error(response)
+      return Promise.reject(response)
+    }
+    else {
+      return Promise.resolve(response)
+    }
   }
 }
