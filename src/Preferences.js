@@ -238,7 +238,7 @@ class Preferences extends Component {
                   </label>
                 </div>
                 <div className="col-2">
-                  <div className="custom-control custom-checkbox">
+                  <div className="custom-control custom-switch">
                     <input
                       type="checkbox"
                       className="custom-control-input"
