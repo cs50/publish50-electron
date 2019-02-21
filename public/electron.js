@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron')
+const { app, BrowserWindow, dialog, Menu } = require('electron')
 const path = require('path')
 const redis = require('redis')
 const url = require('url')
@@ -73,6 +73,24 @@ app.on('ready', async () => {
 
   // Download update, install when the app quits
   updater.checkForUpdatesAndNotify()
+
+  if (process.platform === 'darwin') {
+    Menu.setApplicationMenu(Menu.buildFromTemplate([
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'delete' },
+          { role: 'selectall' }
+        ]
+      }
+    ]));
+  }
 
   try {
     await startRedis()
