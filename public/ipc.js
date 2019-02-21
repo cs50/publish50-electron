@@ -1,9 +1,12 @@
+const fs = require('fs-extra')
+const path = require('path')
 const { BrowserWindow, dialog, ipcMain: ipc } = require('electron')
 
+const { distFolder } = require('./util')
 const preferences = require('./preferences')
 const { queues } = require('./queues')
 const s3 = require('./s3')
-
+const googleAuth = require('./googleauth')
 const { rasters } = require('./constants')
 const logger = require('./logger')
 
@@ -16,12 +19,36 @@ function sendToCurrentWindow(event, data) {
   return true
 }
 
-ipc.on('resize stills', (event, data) => {
+
+// TODO move to images?
+function resizeStills(data) {
+  const jobPromises = []
   new Set(data.files).forEach((imagePath) => {
+   // Copy original to destination
+   // TODO handle if same folder?
+   const outFolder = distFolder(imagePath)
+    if (!fs.existsSync(outFolder))
+        fs.mkdirpSync(outFolder)
+
+    fs.copyFile(
+      imagePath,
+      path.join(outFolder, path.basename(imagePath)),
+      (err) => {
+        if (err)
+          logger.error(err.toString())
+      }
+    )
+
     Object.keys(rasters).forEach((raster) => {
-      queues['image processing'].add('resize still', { imagePath, raster })
+      jobPromises.push(queues['image processing'].add('resize still', { imagePath, raster, outFolder }))
     })
   })
+
+  return jobPromises
+}
+
+ipc.on('resize stills', (event, data) => {
+  resizeStills(data)
 })
 
 ipc.on('update metadata', (event, data) => {
@@ -34,13 +61,17 @@ ipc.on('update metadata', (event, data) => {
   })
 })
 
+
+// TODO move somewhere else?
 function transcode(data) {
-  const { files, formats, rasters, twoPasses } = data
+  const jobPromises = []
+
+  const { files, formats, rasters: rasters_, twoPasses } = data
   new Set(files).forEach((videoPath) => {
 
     // Generate thumbnails
-    if (!formats) {
-      return queues['video transcoding'].add(
+    if (!formats && !/-(a|b).mov$/.test(videoPath)) {
+      jobPromises.push(queues['video transcoding'].add(
         'transcode',
         {
           videoPath,
@@ -49,22 +80,31 @@ function transcode(data) {
           thumbnailStackSize: preferences.get('ffmpeg.thumbnailStackSize'),
           thumbnailStacksOnly: preferences.get('ffmpeg.thumbnailStacksOnly')
         }
-      )
+      ))
+
+      return
     }
 
     // Transcode to mp3
     if (formats.mp3 && !/-(a|b).mov$/.test(videoPath)) {
-      queues['video transcoding'].add('transcode', { videoPath, format: 'mp3' })
+      jobPromises.push(queues['video transcoding'].add('transcode', { videoPath, format: 'mp3' }))
     }
 
     // Transcode to mp4
     if (formats.mp4) {
-      Object.keys(rasters).forEach((raster) => {
-        if (rasters[raster])
-          queues['video transcoding'].add('transcode', { videoPath, format: 'mp4', raster, passes: twoPasses ? 2 : 1 })
+      Object.keys(rasters)
+      .filter((raster) => rasters_[raster] && (rasters[raster].videoBitrate || {}).mp4)
+      .sort((a, b) => parseInt(rasters[b].videoBitrate.mp4) - parseInt(rasters[a].videoBitrate.mp4))
+      .forEach((raster) => {
+          jobPromises.push(queues['video transcoding'].add(
+            'transcode',
+            { videoPath, format: 'mp4', raster, passes: twoPasses ? 2 : 1 }
+          ))
       })
     }
   })
+
+  return jobPromises
 }
 
 ipc.on('transcode', (event, data) => {
