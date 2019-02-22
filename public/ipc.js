@@ -6,7 +6,6 @@ const { distFolder } = require('./util')
 const preferences = require('./preferences')
 const { queues } = require('./queues')
 const s3 = require('./s3')
-const googleAuth = require('./googleauth')
 const { rasters } = require('./constants')
 const logger = require('./logger')
 
@@ -330,8 +329,39 @@ ipc.on('open bucket', (event, data) => {
   s3.openBucket()
 })
 
-ipc.on('publish', (event, data) => {
+ipc.on('publish', async (event, data) => {
+  const jobPromises = []
 
+  // Transcode
+  let videoData = { ...data }
+
+  videoData.files = videoData.files.filter((file) => file.endsWith('.mp4') || file.endsWith('.mov'))
+  jobPromises.push(...transcode(videoData))
+
+  // Generate thumbnails
+  let { formats, ...videoData_ } = videoData
+  jobPromises.push(...transcode(videoData_))
+
+
+  // Resize stills
+  const imageData = { files: data.files.filter((file) => file.endsWith('.png')) }
+  jobPromises.push(...resizeStills(imageData))
+
+  const jobsByQueue = {}
+  const jobs = (await Promise.all(jobPromises))
+  jobs.forEach((job) => {
+    (jobsByQueue[job.queue.name] || (jobsByQueue[job.queue.name] = [])).push(job.id)
+  })
+
+  // Object.keys(jobsByQueue).forEach((queueName) => {
+  //   queues[queueName].on('completed', (job) => {
+
+  //   })
+
+  //   queues[queueName].on('failed', (job) => {
+
+  //   })
+  // })
 })
 
 module.exports = { sendToCurrentWindow }
