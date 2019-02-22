@@ -73,8 +73,7 @@ class DropZone extends React.Component {
   }
 
   onSubmit() {
-    this.props.onSubmit(this.state.files)
-    this.onCancel()
+    this.props.onSubmit(this.state.files, this.onCancel.bind(this))
   }
 
   render() {
