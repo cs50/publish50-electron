@@ -15,7 +15,7 @@ const defaults = {
     secretAccessKey:''
   },
   googleCredentials: {
-    authorizationCode: ''
+    youtubeApiKey: ''
   },
   ffmpeg: {
     thumbnailFrequency: 5,
