@@ -32,9 +32,10 @@ class Transcode extends Component {
     this.setState({ formHidden: files.size < 1 })
   }
 
-  onSubmit(files) {
+  onSubmit(files, resetDropzone) {
     ipc.send('transcode', { files: Array.from(files), ...this.state })
     this.setState(getInitialState())
+    resetDropzone()
   }
 
   formatChanged(e) {

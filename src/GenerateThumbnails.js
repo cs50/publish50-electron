@@ -4,8 +4,9 @@ import DropZone from './DropZone'
 
 const { ipc } = window
 
-function onSubmit(files) {
+function onSubmit(files, resetDropzone) {
   ipc.send('transcode', { files: Array.from(files) })
+  resetDropzone()
 }
 
 class GenerateThumbnails extends Component {
