@@ -4,28 +4,28 @@ import DropZone from './DropZone'
 
 const { ipc } = window
 
-function getInitialState() {
-  return {
-    formats: {
-      mp3: true,
-      mp4: true
-    },
-    rasters: {
-      '240p': true,
-      '360p': true,
-      '720p': true,
-      '1080p': true,
-      '4k': true
-    },
-    twoPasses: true,
-    formHidden: true
-  }
-}
-
 class Transcode extends Component {
   constructor(props) {
     super(props)
-    this.state = getInitialState()
+    this.state = this.getInitialState()
+  }
+
+  getInitialState() {
+    return {
+      formats: {
+        mp3: true,
+        mp4: true
+      },
+      rasters: {
+        '240p': true,
+        '360p': true,
+        '720p': true,
+        '1080p': true,
+        '4k': true
+      },
+      twoPasses: true,
+      formHidden: true
+    }
   }
 
   onDropzoneChange(files) {
@@ -34,7 +34,7 @@ class Transcode extends Component {
 
   onSubmit(files, resetDropzone) {
     ipc.send('transcode', { files: Array.from(files), ...this.state })
-    this.setState(getInitialState())
+    this.setState(this.getInitialState())
     resetDropzone()
   }
 
