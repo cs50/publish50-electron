@@ -164,7 +164,7 @@ function validateS3(s3={}) {
     validated.push(
       validate({
         name: 's3.bucket',
-        value: 'bucket'
+        value: bucket
       })
     )
   }
