@@ -51,11 +51,11 @@ class NewPublish extends Component {
       twoPasses: true,
       youtube: {
         upload: true,
-        privacy: 2
+        privacyStatus: 'unlisted'
       },
       metadata: {
-        title: "",
-        description: ""
+        title: '',
+        description: ''
       },
       emails: [],
       formHidden: true,
@@ -324,19 +324,19 @@ class NewPublish extends Component {
 
                     <select
                       className="custom-select custom-select-sm w-auto position-relative privacy-list"
-                      defaultValue={ this.state.youtube.privacy }
+                      defaultValue={ this.state.youtube.privacyStatus }
                       onChange={
                         (e) => {
                           const youtube = { ...this.state.youtube }
-                          youtube.privacy = e.target.value
+                          youtube.privacyStatus = e.target.value
                           this.setState({ youtube })
                         }
                       }
                       disabled={ !this.state.youtube.upload }
                     >
-                      <option value="0">public</option>
-                      <option value="1">private</option>
-                      <option value="2">unlisted</option>
+                      <option value="public">public</option>
+                      <option value="private">private</option>
+                      <option value="unlisted">unlisted</option>
                     </select>
                   </div>
                 </div>
