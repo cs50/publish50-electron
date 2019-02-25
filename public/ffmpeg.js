@@ -11,8 +11,6 @@ const logger = require('./logger')
 const { rasters, codecs } = require('./constants')
 const { getBin } = require('./util')
 
-class FFMPEGEmitter extends EventEmitter {}
-
 async function ffprobe(videoPath) {
   let metadata
 
@@ -78,7 +76,7 @@ async function ffmpegProgress(videoPath, child, callback) {
 function ffmpeg(videoPath) {
   return {
     async thumbnails(options) {
-      const emitter = new FFMPEGEmitter()
+      const emitter = new EventEmitter()
       const { thumbnailFrequency, size, outFolder } = options
 
       let filters = `fps=(1/${thumbnailFrequency})`
@@ -118,7 +116,7 @@ function ffmpeg(videoPath) {
     },
 
     async transcode(options) {
-      const emitter = new FFMPEGEmitter()
+      const emitter = new EventEmitter()
       const { outFile, format } = options
 
       const outFolder = path.dirname(outFile)
