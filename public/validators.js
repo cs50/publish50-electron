@@ -142,14 +142,14 @@ function validateAWSCredentials(credentials={}) {
 }
 
 function validateGoogleCredentials(credentials={}) {
-  const { youtubeApiKey } = credentials
+  const { tokens } = credentials
   const validated = []
 
-  if (youtubeApiKey) {
+  if (tokens) {
     validated.push(
       validate({
-        name: 'googleCredentials.youtubeApiKey',
-        value: youtubeApiKey
+        name: 'googleCredentials.tokens',
+        value: tokens
       })
     )
   }

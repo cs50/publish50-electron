@@ -15,7 +15,7 @@ const defaults = {
     secretAccessKey:''
   },
   googleCredentials: {
-    youtubeApiKey: ''
+    tokens: ''
   },
   ffmpeg: {
     thumbnailFrequency: 5,
@@ -55,7 +55,14 @@ module.exports = {
   get: settings.get.bind(settings),
 
   async save(preferences) {
-    const { general, ffmpeg, awsCredentials, googleCredentials, s3 } = preferences
+    const {
+      general,
+      ffmpeg,
+      awsCredentials,
+      googleCredentials,
+      s3
+    } = preferences
+
     let validated = validators.validateGeneral(general)
     .concat(validators.validateFFMPEG(ffmpeg))
     .concat(validators.validateAWSCredentials(awsCredentials))
