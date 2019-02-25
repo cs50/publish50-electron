@@ -38,6 +38,11 @@ class JobDescription extends React.Component {
       case 'update metadata':
         return <div>Update <abbr title={ path.join(data.bucket || '', data.prefix || '') }>metadata.json</abbr></div>
 
+
+      case 'upload':
+        console.log(data)
+        return <div>Upload <abbr title={ data.videoPath }>{ truncate(data.videoPath) }</abbr> to YouTube</div>
+
       default:
         return <div>Unknown job</div>
     }

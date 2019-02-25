@@ -4,7 +4,13 @@ const Queue = require('bull')
 const logger = require('./logger')
 const preferences = require('./preferences')
 
-const queueNames = [ 'image processing', 'video transcoding', 'metadata' ]
+const queueNames = [
+  'image processing',
+  'video transcoding',
+  'metadata',
+  'youtube'
+]
+
 const queues = {}
 
 const jobsPath = path.join(__dirname, 'jobs')
@@ -35,6 +41,8 @@ queues['video transcoding'].process(
   preferences.get('general.videoTranscodingWorkers'),
   path.join(jobsPath, '/transcode.js')
 )
+
+queues['youtube'].process('upload', 8, path.join(jobsPath, 'youtube.js'))
 
 module.exports = {
   queues,

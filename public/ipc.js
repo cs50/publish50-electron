@@ -8,6 +8,8 @@ const { queues } = require('./queues')
 const s3 = require('./s3')
 const { rasters } = require('./constants')
 const logger = require('./logger')
+const googleOAuth = require('./google-oauth')
+const youtube = require('./youtube')
 
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
@@ -69,7 +71,7 @@ function transcode(data) {
   new Set(files).forEach((videoPath) => {
 
     // Generate thumbnails
-    if (!formats && !/-(a|b).mov$/.test(videoPath)) {
+    if (!formats && !isCameras(videoPath) && !isScreens(videoPath)) {
       jobPromises.push(queues['video transcoding'].add(
         'transcode',
         {
@@ -329,13 +331,69 @@ ipc.on('open bucket', (event, data) => {
   s3.openBucket()
 })
 
-ipc.on('publish', async (event, data) => {
-  const jobPromises = []
+function isCameras(videoPath) {
+  return /-a\.(mp4|mov)$/.test(videoPath)
+}
 
+function isScreens(videoPath) {
+  return /-b\.(mp4|mov)$/.test(videoPath)
+}
+
+function youtubeUpload(options) {
+
+  const jobPromises = []
+  const { credentials } = options
+  const {
+    files,
+    metadata: { title, description },
+    youtube: { privacyStatus }
+  } = options.videoData
+
+  new Set(files).forEach((videoPath) => {
+    let title_ = title
+    if (isCameras(videoPath) && !title.endsWith(', cameras')) {
+      title_ += ', cameras'
+    }
+    else if (isScreens(videoPath) && !title.endsWith(', screens')) {
+      title_ += ', screens'
+    }
+
+    jobPromises.push(queues['youtube'].add(
+      'upload',
+      { credentials, videoPath, title: title_, privacyStatus }
+    ))
+  })
+
+  return jobPromises
+}
+
+ipc.on('publish', async (event, data) => {
   // Transcode
   let videoData = { ...data }
 
-  videoData.files = videoData.files.filter((file) => file.endsWith('.mp4') || file.endsWith('.mov'))
+  // Youtube uploads
+  const uploads = []
+  const transcodeThenUpload = []
+
+  videoData.files = videoData.files.filter((file) => {
+    const isVideoFile = file.endsWith('.mp4') || file.endsWith('.mov')
+    if (data.youtube.upload && isVideoFile) {
+      if (fs.statSync(file).size <= youtube.maxVideoSize)
+        uploads.push(file)
+      else
+        transcodeThenUpload.push(file)
+    }
+
+    return isVideoFile
+  })
+
+  if (data.youtube.upload) {
+    const credentials = await googleOAuth.authenticate(youtube.scopes)
+    const youtubeVideoData = { ...videoData }
+    youtubeVideoData.files = uploads
+    jobPromises.push(...youtubeUpload({ credentials, youtubeVideoData}))
+  }
+
   jobPromises.push(...transcode(videoData))
 
   // Generate thumbnails
