@@ -13,6 +13,9 @@ class CDNPath extends Component {
     super(props)
     this.state = this.getInitialState()
     this.s3Client = new AWS.S3(this.props.awsCredentials)
+
+    if (!this.props.onSelect)
+      this.props.onSelect = ((prefix) => {})
   }
 
   getPrefixes(Prefix) {
@@ -74,6 +77,7 @@ class CDNPath extends Component {
 
           onSelect={
             (prefix, item) => {
+              this.props.onSelect(prefix)
 
               // Abort current request for fetching metadata (if any)
               controller.abort()

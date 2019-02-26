@@ -131,6 +131,10 @@ class NewPublish extends Component {
                         }
                       }
 
+                      onSelect={
+                        (prefix) => this.setState({ prefix })
+                      }
+
                       onError={
                         (s3ClientError) => this.setState({ s3ClientError })
                       }

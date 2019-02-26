@@ -1,5 +1,8 @@
 const path = require('path')
 const AWS = require('aws-sdk')
+
+const logger = require('../logger')
+
 module.exports = function (job) {
   return new Promise((resolve, reject) => {
     // TODO PULL WHAT'S IN S3 FIRST
@@ -17,8 +20,10 @@ module.exports = function (job) {
         Key: path.join(prefix, 'metadata.json')
       },
       (err, result) => {
-        if (err)
+        if (err) {
+          logger.error(err)
           return reject(new Error(err))
+        }
 
         resolve(result)
       }
