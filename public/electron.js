@@ -37,7 +37,7 @@ async function startRedis() {
 
         if (options.attempt > 3) {
           const err = new Error(
-            'Are you sure port ${redisPort} is available? Try killing any ' +
+            `Are you sure port ${redisPort} is available? Try killing any ` +
             `process listening on port ${redisPort} or changing redis port ` +
             'in Preferences, restart publish50, and try again!'
           )

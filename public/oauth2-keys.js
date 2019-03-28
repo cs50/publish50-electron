@@ -1,7 +1,7 @@
 const path = require('path')
 
 const { client_id, client_secret, redirect_uris }  = require(
-  path.join(require('os').homedir(), '.publish50', 'client_secret')
+  path.join(require('os').homedir(), '.publish50', 'client_secret.json')
 ).installed
 
 module.exports = {

@@ -40,7 +40,7 @@ function resizeStills(data) {
       }
     )
 
-    Object.keys(rasters).forEach((raster) => {
+    Object.keys(rasters).filter((raster) => raster !== '4k').forEach((raster) => {
       jobPromises.push(queues['image processing'].add('resize still', { imagePath, raster, outFolder }))
     })
   })
