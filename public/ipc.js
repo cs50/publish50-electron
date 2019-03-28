@@ -368,6 +368,8 @@ function youtubeUpload(options) {
 }
 
 ipc.on('publish', async (event, data) => {
+  const jobPromises = []
+
   // Transcode
   let videoData = { ...data }
 
