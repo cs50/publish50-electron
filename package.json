@@ -1,6 +1,6 @@
 {
   "name": "publish50",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Automates video transcoding and publishing",
   "author": "CS50",
   "private": true,

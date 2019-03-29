@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, Menu } = require('electron')
+const { app, BrowserWindow, dialog, globalShortcut, Menu } = require('electron')
 const path = require('path')
 const redis = require('redis')
 const url = require('url')
@@ -87,6 +87,8 @@ function initialize(queues) {
 }
 
 app.on('ready', async () => {
+
+  globalShortcut.register('CommandOrControl+Q', () => app.quit())
 
   // Download update, install when the app quits
   updater.checkForUpdatesAndNotify()
