@@ -1,5 +1,4 @@
 const { app } = require('electron')
-const appVersion = app.getVersion()
 const settings = require('electron-settings')
 
 const validators = require('./validators')
@@ -30,9 +29,6 @@ const defaults = {
     durationSeconds: 4 * 60 * 60,
     roleSessionName: 'publish50',
     roleArn: 'arn:aws:iam::518640797791:role/publish50Role'
-  },
-  about: {
-    version: appVersion
   }
 }
 
@@ -44,6 +40,7 @@ function setDefaults() {
 if (Object.keys(settings.getAll()).length < 1)
   setDefaults()
 
+settings.set('about.version', app.getVersion())
 
 module.exports = {
   defaults,
