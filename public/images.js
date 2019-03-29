@@ -1,12 +1,18 @@
-const im = require('imagemagick')
+const { execFileSync } = require('child_process')
 const fs = require('fs-extra')
 const path = require('path')
 const util = require('util')
 
+const { getBin } = require('./util')
+
 const { rasters } = require('./constants')
 
-const convert = util.promisify(im.convert)
 const readdir = util.promisify(fs.readdir)
+
+
+async function convert(args) {
+  return execFileSync(getBin('convert'), args).toString()
+}
 
 function dd(n) {
   return `${n < 10 ? '0' : ''}${n}`

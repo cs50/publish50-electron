@@ -381,7 +381,7 @@ class Preferences extends Component {
                 </div>
 
                 <div className="col-5">
-                  <small>0.1.0</small>
+                  <small>{ this.state.preferences.about.version }</small>
                 </div>
 
               </div>
