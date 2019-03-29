@@ -24,7 +24,8 @@ async function startRedis() {
       '--port', redisPort,
       '--appendonly', 'yes',
       '--appendfsync', 'everysec'
-    ]
+    ],
+    { cwd: app.getPath('userData') }
   )
 
   return new Promise((resolve, reject) => {
