@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 
 import DropZone from './DropZone'
 
-const ipc = window.require('electron').ipcRenderer
-function onSubmit(files) {
+const { ipc } = window
+
+function onSubmit(files, resetDropzone) {
   ipc.send('transcode', { files: Array.from(files) })
+  resetDropzone()
 }
 
 class GenerateThumbnails extends Component {

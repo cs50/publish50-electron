@@ -12,8 +12,11 @@ import Home from './Home'
 import Metadata from './Metadata'
 import ResizeStills from './ResizeStills'
 import GenerateThumbnails from './GenerateThumbnails'
+import NewPublish from './NewPublish'
 import Transcode from './Transcode'
 import Preferences from './Preferences'
+
+const { ipc } = window
 
 class App extends Component {
   render() {
@@ -35,10 +38,10 @@ class App extends Component {
                 </li>
 
                 <li className="nav-item">
-                  <NavLink to="/browse-cdn" className="nav-link pr-0 pl-4">
+                  <button className="btn nav-link pr-0 pl-4" onClick={ () => ipc.send('open bucket') }>
                     Browse CDN
                     <span className="divider ml-4"></span>
-                  </NavLink>
+                  </button>
                 </li>
 
                 <li className="nav-item">
@@ -74,11 +77,13 @@ class App extends Component {
           </nav>
           <div className="d-flex h-100 w-100">
             <Route exact path="/" component={ Home } />
-            <Route exact path="/update-metadata" component={ Metadata } />
-            <Route exact path="/resize-stills" component={ ResizeStills } />
-            <Route exact path="/transcode" component={ Transcode } />
-            <Route exact path="/generate-thumbnails" component={ GenerateThumbnails } />
-            <Route exact path="/preferences" component={ Preferences } />
+            <Route path="/home" component={ Home } />
+            <Route path="/new-publish" component={ NewPublish } />
+            <Route path="/update-metadata" component={ Metadata } />
+            <Route path="/resize-stills" component={ ResizeStills } />
+            <Route path="/transcode" component={ Transcode } />
+            <Route path="/generate-thumbnails" component={ GenerateThumbnails } />
+            <Route path="/preferences" component={ Preferences } />
           </div>
           <script>
 

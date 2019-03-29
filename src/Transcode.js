@@ -2,39 +2,40 @@ import React, { Component } from 'react';
 
 import DropZone from './DropZone'
 
-const ipc = window.require('electron').ipcRenderer
-
-function getInitialState() {
-  return {
-    formats: {
-      mp3: true,
-      mp4: true
-    },
-    rasters: {
-      '240p': true,
-      '360p': true,
-      '720p': true,
-      '1080p': true,
-      '4k': true
-    },
-    passes: 2,
-    formHidden: true
-  }
-}
+const { ipc } = window
 
 class Transcode extends Component {
   constructor(props) {
     super(props)
-    this.state = getInitialState()
+    this.state = this.getInitialState()
+  }
+
+  getInitialState() {
+    return {
+      formats: {
+        mp3: true,
+        mp4: true
+      },
+      rasters: {
+        '240p': true,
+        '360p': true,
+        '720p': true,
+        '1080p': true,
+        '4k': true
+      },
+      twoPasses: true,
+      formHidden: true
+    }
   }
 
   onDropzoneChange(files) {
     this.setState({ formHidden: files.size < 1 })
   }
 
-  onSubmit(files) {
+  onSubmit(files, resetDropzone) {
     ipc.send('transcode', { files: Array.from(files), ...this.state })
-    this.setState(getInitialState())
+    this.setState(this.getInitialState())
+    resetDropzone()
   }
 
   formatChanged(e) {
@@ -51,10 +52,6 @@ class Transcode extends Component {
     this.setState({
       rasters: { ...rasters }
     })
-  }
-
-  passesChanged(e) {
-    this.setState({ passes: parseInt(e.target.value) })
   }
 
   render() {
@@ -88,18 +85,8 @@ class Transcode extends Component {
                   </div>
                 }) }
               </div>
-              <div className="col">
-                <label>How many passes would you like ffmpeg to perform while transcoding to mp4?</label>
-                <select
-                  defaultValue={ this.state.passes }
-                  className="custom-select"
-                  onChange={ this.passesChanged.bind(this) }
-                  disabled={ !this.state.formats.mp4 }>
-                  <option value="1">One</option>
-                  <option value="2">Two (Recommended)</option>
-                </select>
-              </div>
             </div>
+
             <div className="row mt-3">
               <div className="col">
                 <label>
@@ -124,8 +111,26 @@ class Transcode extends Component {
                   })
                 }
               </div>
-              <div className="col">
+            </div>
 
+            <div className="row mt-3">
+              <div className="col">
+                <div className="custom-control custom-switch">
+                  <input
+                    type="checkbox"
+                    className="custom-control-input"
+                    id="twoPasses"
+                    checked={ this.state.twoPasses }
+                    onChange={ (e) => this.setState({ twoPasses: e.target.checked }) }
+                    disabled={ !this.state.formats.mp4 }
+                  />
+
+                  <label
+                    className="custom-control-label"
+                    htmlFor="twoPasses">
+                    Perform two passes <small className="text-muted">(recommended)</small>
+                  </label>
+                </div>
               </div>
             </div>
           </form>

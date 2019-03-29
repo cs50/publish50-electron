@@ -1,76 +1,80 @@
-module.exports = function (appVersion) {
-  const settings = require('electron-settings')
-  const defaults = {
-    general: {
-      redisPort: 6379,
-      imageProcessingWorkers: 64,
-      videoTranscodingWorkers: 8
-    },
-    awsCredentials: {
-      accessKeyId:'',
-      secretAccessKey:''
-    },
-    ffmpeg: {
-      thumbnailFrequency: 5,
-      thumbnailHeight: 90,
-      thumbnailStackSize: 12,
-      thumbnailStacksOnly: true
-    },
-    s3: {
-      bucket: 'cdn.cs50.net',
-      prefix: ''
-    },
-    about: {
-      version: appVersion
-    }
+const { app } = require('electron')
+const appVersion = app.getVersion()
+const settings = require('electron-settings')
+
+const validators = require('./validators')
+
+const defaults = {
+  general: {
+    redisPort: 6379,
+    imageProcessingWorkers: 64,
+    videoTranscodingWorkers: 8
+  },
+  awsCredentials: {
+    accessKeyId:'',
+    secretAccessKey:''
+  },
+  googleCredentials: {
+    tokens: ''
+  },
+  ffmpeg: {
+    thumbnailFrequency: 5,
+    thumbnailHeight: 90,
+    thumbnailStackSize: 12,
+    thumbnailStacksOnly: true
+  },
+  s3: {
+    bucket: 'cdn.cs50.net',
+    prefix: '',
+    region: 'us-east-1',
+    durationSeconds: 4 * 60 * 60,
+    roleSessionName: 'publish50',
+    roleArn: 'arn:aws:iam::518640797791:role/publish50Role'
+  },
+  about: {
+    version: appVersion
   }
+}
 
-  function load(reset) {
-    if (reset || Object.keys(settings.getAll()).length < 1) {
-      settings.setAll(defaults)
-      return defaults
+function setDefaults() {
+  settings.setAll(defaults)
+  return defaults
+}
+
+if (Object.keys(settings.getAll()).length < 1)
+  setDefaults()
+
+
+module.exports = {
+  defaults,
+
+  load: settings.getAll.bind(settings),
+
+  reset: setDefaults,
+
+  get: settings.get.bind(settings),
+
+  async save(preferences) {
+    const {
+      general,
+      ffmpeg,
+      awsCredentials,
+      googleCredentials,
+      s3
+    } = preferences
+
+    let validated = validators.validateGeneral(general)
+    .concat(validators.validateFFMPEG(ffmpeg))
+    .concat(validators.validateAWSCredentials(awsCredentials))
+    .concat(validators.validateGoogleCredentials(googleCredentials))
+    .concat(validators.validateS3(s3))
+
+    if (validated.some((setting) => setting.err)) {
+      return Promise.reject(validated)
     }
-
-    const preferences = {}
-    Object.keys(defaults).forEach((key) => {
-      preferences[key] = settings.get(key, defaults[key])
-    })
-
-    return preferences
-  }
-
-  return {
-    load,
-
-    save(preferences) {
-      preferences.general.redisPort = parseInt(preferences.general.redisPort) ||
-        defaults.general.redisPort
-
-      preferences.general.imageProcessingWorkers = parseInt(preferences.general.imageProcessingWrokers) ||
-        defaults.general.imageProcessingWorkers
-
-      preferences.general.videoTranscodingWorkers = parseInt(preferences.general.videoTranscodingWorkers) ||
-        defaults.general.videoTranscoldingWorkers
-
-      preferences.ffmpeg.thumbnailFrequency = parseInt(preferences.ffmpeg.thumbnailFrequency) ||
-        defaults.ffmpeg.thumbnailFrequency
-
-      preferences.ffmpeg.thumbnailStackSize = parseInt(preferences.ffmpeg.thumbnailStackSize) ||
-        defaults.ffmpeg.thumbnailStackSize
-
-      preferences.ffmpeg.thumbnailStacksOnly = preferences.ffmpeg.thumbnailStacksOnly && true
-
-      settings.setAll(preferences)
-    },
-
-    defaults,
-
-    reset() {
-      return load(true)
-    },
-
-    getAll: settings.getAll.bind(settings),
-
-    get: settings.get.bind(settings)
+    else if (validated.length > 0) {
+      validated.forEach((setting) => settings.set(setting.name, setting.value))
+      return Promise.resolve(validated)
+    }
   }
 }

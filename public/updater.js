@@ -1,7 +1,7 @@
-const log = require('./log')
+const logger = require('./logger')
 
 const { autoUpdater } = require('electron-updater')
-autoUpdater.logger = log
+autoUpdater.logger = logger
 
 module.exports = autoUpdater
 

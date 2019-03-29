@@ -2,9 +2,7 @@ const path = require('path')
 const { ffmpeg, ffprobe } = require('../ffmpeg')
 const images = require('../images')
 
-function distFolder(videoPath) {
-  return path.join(path.dirname(videoPath), '../dist')
-}
+const { distFolder } = require('../util')
 
 async function generateThumbnails(job) {
   const {
@@ -52,7 +50,7 @@ async function generateThumbnails(job) {
     process.on('message', (message) => {
       if (message.__abortJobId__ === job.id || message.__abortJobId__ === '__self__') {
         job_.emit('abort')
-        return reject(new Error("ABORTED"))
+        reject(new Error("ABORTED"))
       }
     })
 
@@ -119,13 +117,13 @@ async function transcode(job) {
     process.on('message', (message) => {
       if (message.__abortJobId__ === job.id || message.__abortJobId__ === '__self__') {
         job_.emit('abort')
-        return reject(new Error("ABORTED"))
+        reject(new Error("ABORTED"))
       }
     })
 
     job_.on('end', (e) => {
       if (e.code !== 0)
-        return reject(`ffmpeg exited with error code ${e.code}`)
+        return reject(new Error(`ffmpeg exited with error code ${e.code}`))
 
       resolve()
     })

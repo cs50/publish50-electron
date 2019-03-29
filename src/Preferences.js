@@ -2,23 +2,22 @@ import React, { Component } from 'react';
 
 import './Preferences.css'
 
-const ipc = window.require('electron').ipcRenderer
+const { ipc } = window
 class Preferences extends Component {
   constructor(props) {
     super(props)
     this.state = this.getInitialState()
-    this.getPreferences((preferences) => this.setState({ preferences }))
+
+    this.boundHandlePreferences = this.handlePreferences.bind(this)
+
+    ipc.on('preferences', this.boundHandlePreferences)
+    ipc.send('get preferences')
 
     this.awsSecretAccessKeyRef = React.createRef()
   }
 
-  getPreferences(callback, reset) {
-    if (reset)
-      ipc.send('reset preferences')
-    else
-      ipc.send('get preferences')
-
-    ipc.once('preferences', (event, preferences) => callback(preferences))
+  handlePreferences(event, preferences) {
+    this.setState({ preferences })
   }
 
   getInitialState() {
@@ -61,6 +60,10 @@ class Preferences extends Component {
     const preferences = { ...this.state.preferences }
     preferences.awsCredentials.secretAccessKey = ""
     this.setState({ preferences })
+  }
+
+  componentWillUnmount() {
+    ipc.removeListener('preferences', this.boundHandlePreferences)
   }
 
   render() {
@@ -134,7 +137,9 @@ class Preferences extends Component {
                   <input
                     id="redisPort"
                     className="form-control form-control-sm"
-                    type="number" min="1"
+                    type="number"
+                    min="1"
+                    max="65535"
                     onChange={ this.onChange.bind(this, 'general.redisPort') }
                     value={ this.state.preferences.general.redisPort } />
                 </div>
@@ -233,7 +238,7 @@ class Preferences extends Component {
                   </label>
                 </div>
                 <div className="col-2">
-                  <div className="custom-control custom-checkbox">
+                  <div className="custom-control custom-switch">
                     <input
                       type="checkbox"
                       className="custom-control-input"
@@ -304,11 +309,68 @@ class Preferences extends Component {
                     value={ this.state.preferences.s3.prefix }
                   />
                 </div>
+              </div>
 
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Region</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.region') }
+                    value={ this.state.preferences.s3.region }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Role ARN</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.roleArn') }
+                    value={ this.state.preferences.s3.roleArn }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Role session name</small></label>
+                </div>
+
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 's3.roleSessionName') }
+                    value={ this.state.preferences.s3.roleSessionName }
+                  />
+                </div>
+              </div>
+
+              <div className="row mt-2">
+                <div className="col-5">
+                  <label><small className="text-muted">Session duration (s)</small></label>
+                </div>
+
+                <div className="col-2">
+                  <input
+                    className="form-control"
+                    type="number"
+                    min="1"
+                    max="43200"
+                    onChange={ this.onChange.bind(this, 's3.durationSeconds') }
+                    value={ this.state.preferences.s3.durationSeconds }
+                  />
+                </div>
               </div>
             </div>
           </div>
-
 
           <div className="mt-4">
             <h6 className="text-dark border-bottom pb-2">About</h6>
@@ -326,7 +388,6 @@ class Preferences extends Component {
             </div>
           </div>
 
-
           <div className="text-right my-4">
             <button
               type="button"
@@ -338,12 +399,11 @@ class Preferences extends Component {
             <button
               type="button"
               className="btn btn-secondary ml-1"
-              onClick={ this.getPreferences.bind(this, (preferences) => this.setState({ preferences }), true) }>
+              onClick={ () => ipc.send('reset preferences') }>
                 Reset Defaults
             </button>
           </div>
         </div>
-
       </div>
     );
   }

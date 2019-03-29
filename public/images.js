@@ -1,5 +1,5 @@
 const im = require('imagemagick')
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const util = require('util')
 
@@ -22,9 +22,7 @@ function hhmmssttt(seconds) {
 
 module.exports = {
   async resizeStill(options) {
-    const inFile = options.imagePath
-    const raster = options.raster
-    const maxSize = options.maxSize || 2 * 1024 * 1024
+    const { imagePath, outFolder, raster, maxSize = 2 * 1024 * 1024 } = options
 
     if (Object.keys(rasters).indexOf(raster) < 0)
       return Promise.reject(new Error(`unknown raster ${raster}`))
@@ -33,7 +31,7 @@ module.exports = {
     if (!height)
       return Promise.reject(new Error(`unknown height for raster ${raster}`))
 
-    let args = [inFile]
+    let args = [ imagePath ]
     if (height === 140) {
       args.push(
         '-thumbnail', '249x140',
@@ -46,9 +44,8 @@ module.exports = {
       args.push('-resize', `x${height}`)
     }
 
-    const outFileBasename = path.join(path.dirname(inFile), `${path.basename(inFile, path.extname(inFile))}-${raster}`)
+    const outFileBasename = path.join(outFolder, `${path.basename(imagePath, path.extname(imagePath))}-${raster}`)
     const outFilePNG = `${outFileBasename}.png`
-
     try {
       await convert([...args, outFilePNG])
     }

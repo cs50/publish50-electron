@@ -1,0 +1,11 @@
+.abort-all {
+  position: absolute;
+  top: 2px;
+  right: 0px;
+  opacity: 0.3;
+  cursor: pointer;
+}
+
+.abort-all:hover {
+  opacity: 0.5;
+}
