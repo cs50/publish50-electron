@@ -83,6 +83,9 @@ class Preferences extends Component {
             <li className="list-group-item">
               <small>CDN</small>
             </li>
+            <li className="list-group-item">
+              <small>CloudFront</small>
+            </li>
             <li className="list-group-item flex-grow-1">
               <small>About</small>
             </li>
@@ -366,6 +369,24 @@ class Preferences extends Component {
                     max="43200"
                     onChange={ this.onChange.bind(this, 's3.durationSeconds') }
                     value={ this.state.preferences.s3.durationSeconds }
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <h6 id="cloudfront" className="text-dark border-bottom pb-2">CloudFront</h6>
+            <div className="pl-3 pb-3">
+              <div className="row mt-4">
+                <div className="col-5">
+                  <label><small className="text-muted">Distribution ID</small></label>
+                </div>
+                <div className="col-5">
+                  <input
+                    className="form-control"
+                    onChange={ this.onChange.bind(this, 'cloudfront.distributionId') }
+                    value={ this.state.preferences.cloudfront.distributionId }
                   />
                 </div>
               </div>

@@ -25,6 +25,18 @@ class Metadata extends Component {
     this.setState({ loading: false, preferences, prefix: preferences.s3.prefix })
   }
 
+  getInitialMetadata() {
+    return {
+      title: "",
+      authors: [],
+      youtube: {
+        main: "",
+        cameras: "",
+        screens: ""
+      }
+    }
+  }
+
   getInitialState() {
     return {
       loading: true,
@@ -39,15 +51,7 @@ class Metadata extends Component {
           prefix: ''
         }
       },
-      metadata: {
-        title: "",
-        authors: [],
-        youtube: {
-          main: "",
-          cameras: "",
-          screens: ""
-        }
-      }
+      metadata: this.getInitialMetadata()
     }
   }
 

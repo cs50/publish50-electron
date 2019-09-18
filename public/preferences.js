@@ -13,6 +13,9 @@ const defaults = {
     accessKeyId:'',
     secretAccessKey:''
   },
+  cloudfront: {
+    distributionId: ''
+  },
   googleCredentials: {
     tokens: ''
   },
@@ -32,13 +35,31 @@ const defaults = {
   }
 }
 
-function setDefaults() {
-  settings.setAll(defaults)
-  return defaults
+function setDefaultsHelper(defaults, currentSettings) {
+  Object.keys(defaults).forEach((key) => {
+    if (!currentSettings.hasOwnProperty(key)) {
+      currentSettings[key] = defaults[key]
+    }
+    else if (typeof (currentSettings[key]) === 'object') {
+      setDefaultsHelper(defaults[key], currentSettings[key])
+    }
+  })
 }
 
-if (Object.keys(settings.getAll()).length < 1)
-  setDefaults()
+function setDefaults(force) {
+  if (force) {
+    settings.setAll(defaults)
+    return defaults
+  }
+
+  const currentSettings = settings.getAll() || {}
+  setDefaultsHelper(defaults, currentSettings)
+
+  settings.setAll(currentSettings)
+  return currentSettings
+}
+
+setDefaults()
 
 settings.set('about.version', app.getVersion())
 
@@ -47,7 +68,7 @@ module.exports = {
 
   load: settings.getAll.bind(settings),
 
-  reset: setDefaults,
+  reset: setDefaults.bind(null, true),
 
   get: settings.get.bind(settings),
 
@@ -56,6 +77,7 @@ module.exports = {
       general,
       ffmpeg,
       awsCredentials,
+      cloudfront,
       googleCredentials,
       s3
     } = preferences
@@ -65,6 +87,7 @@ module.exports = {
     .concat(validators.validateAWSCredentials(awsCredentials))
     .concat(validators.validateGoogleCredentials(googleCredentials))
     .concat(validators.validateS3(s3))
+    .concat(validators.validateCloudfront(cloudfront))
 
     if (validated.some((setting) => setting.err)) {
       return Promise.reject(validated)

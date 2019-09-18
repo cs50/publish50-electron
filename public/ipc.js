@@ -58,7 +58,8 @@ ipc.on('update metadata', (event, data) => {
     ...preferences.get('awsCredentials'),
     bucket,
     prefix,
-    metadata
+    metadata,
+    ...preferences.get('cloudfront')
   })
 })
 

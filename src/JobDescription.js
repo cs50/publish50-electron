@@ -36,7 +36,7 @@ class JobDescription extends React.Component {
         </div>
 
       case 'update metadata':
-        return <div>Update <abbr title={ path.join(data.bucket || '', data.prefix || '') }>metadata.json</abbr></div>
+        return <div>Update <abbr title={ path.join(data.bucket || '', data.prefix || '') }>index.json</abbr></div>
 
 
       case 'upload':
