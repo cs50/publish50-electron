@@ -8,6 +8,10 @@ import './CDNPath.css'
 let controller = new AbortController()
 let signal = controller.signal
 
+function normalizePrefix(prefix) {
+  return prefix.replace(/\/$/, '')
+}
+
 class CDNPath extends Component {
   constructor(props) {
     super(props)
@@ -48,6 +52,40 @@ class CDNPath extends Component {
     }
   }
 
+  onChange(prefix) {
+    this.getPrefixes(prefix)
+    this.setState({
+      prefix,
+      prefixesMenuOpen: document.activeElement.getAttribute('id') === 'prefixInput',
+    })
+
+    if (this.state.timeout) {
+      clearTimeout(this.state.timeout)
+    }
+
+    const timeout = setTimeout(() => {
+      this.props.onSelect(prefix)
+
+      // Abort current request for fetching metadata (if any)
+      controller.abort()
+      controller = new AbortController()
+      signal = controller.signal
+
+      fetch(`https://${this.props.bucket}/${normalizePrefix(prefix)}/index.json`, { signal })
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json()
+        }
+      })
+      .then((metadata) => {
+        if (metadata)
+          this.props.onData(metadata)
+      })
+    }, 500)
+
+    this.setState({ timeout })
+  }
+
   render() {
     const { bucket } = this.props
     return <div className="form-group">
@@ -75,37 +113,9 @@ class CDNPath extends Component {
             (item) => item.name
           }
 
-          onSelect={
-            (prefix, item) => {
-              this.props.onSelect(prefix)
+          onSelect={this.onChange.bind(this)}
 
-              // Abort current request for fetching metadata (if any)
-              controller.abort()
-              controller = new AbortController()
-              signal = controller.signal
-
-              this.getPrefixes(prefix)
-              this.setState({
-                prefix,
-                prefixesMenuOpen: document.activeElement.getAttribute('id') === 'prefixInput',
-              })
-
-              fetch(`https://${bucket}/${prefix}metadata.json`, { signal })
-              .then((response) => {
-                if (response.status === 200)
-                  return response.json()
-              })
-              .then((metadata) => {
-                if (metadata)
-                  this.props.onData(metadata)
-              })
-            }
-          }
-
-          onChange={(event, prefix) => {
-            this.getPrefixes(prefix)
-            this.setState({ prefix, prefixesMenuOpen: true })
-          }}
+          onChange={(event, prefix) => {this.onChange(prefix)}}
 
           open={ this.state.prefixesMenuOpen }
 
@@ -128,7 +138,9 @@ class CDNPath extends Component {
                 className="form-control"
                 placeholder="2019/x/lectures/0"
                 autoFocus
-                onBlur={ () => this.setState({ prefixesMenuOpen: false }) }
+                onBlur={ () => {
+                  this.setState({ prefixesMenuOpen: false })
+                }}
                 value={ this.state.prefix }
               />
             }

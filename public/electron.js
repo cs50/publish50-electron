@@ -70,6 +70,7 @@ function initialize(queues) {
     icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
     show: false,
     webPreferences: {
+      contextIsolation: false,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js')
     }
@@ -81,6 +82,7 @@ function initialize(queues) {
   )
 
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
+  // mainWindow.webContents.openDevTools()
   mainWindow.on('closed', () => {
     mainWindow = null
   })

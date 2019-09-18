@@ -224,11 +224,28 @@ function validateS3(s3={}) {
   return validated
 }
 
+
+function validateCloudfront(cloudfront={}) {
+  const { distributionId } = cloudfront
+  const validated = []
+  if (distributionId) {
+    validated.push(
+      validate({
+        name: 'cloudfront.distributionId',
+        value: distributionId
+      })
+    )
+  }
+
+  return validated
+}
+
 module.exports = {
   validate,
   validateGeneral,
   validateFFMPEG,
   validateAWSCredentials,
   validateGoogleCredentials,
-  validateS3
+  validateS3,
+  validateCloudfront
 }
