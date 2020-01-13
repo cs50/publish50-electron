@@ -1,6 +1,5 @@
 const { app } = require('electron')
 const settings = require('electron-settings')
-
 const logger = require('./logger')
 const validators = require('./validators')
 

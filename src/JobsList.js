@@ -1,9 +1,10 @@
 import React from 'react'
-import JobDescription from './JobDescription'
 import './JobsList.css'
 
 import doneIcon from './assets/images/done.svg'
 import clearIcon from './assets/images/abort_all.svg'
+
+import { getJobDescription } from './job_helper'
 
 class JobsList extends React.Component {
   render() {
@@ -23,7 +24,6 @@ class JobsList extends React.Component {
         <img src={ clearIcon } alt="Clear all" className="clear-all-icon" />
       </button>
       <ul className="list-group job-list">
-
 
         {
           jobs.map((job) => {
@@ -47,7 +47,7 @@ class JobsList extends React.Component {
                 <span aria-hidden="true">&times;</span>
               </button>
               <div>
-                <JobDescription job={ job } />
+                {getJobDescription(job)}
               </div>
               <small className="text-secondary">
                 { subtext }
