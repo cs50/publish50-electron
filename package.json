@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {
     "aws-sdk": "^2.401.0",
-    "bootstrap": "^4.2.1",
+    "bootstrap": "^4.3.1",
     "bull": "^3.6.0",
     "electron-log": "^3.0.1",
     "electron-settings": "^3.2.0",
