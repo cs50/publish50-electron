@@ -211,10 +211,11 @@ class Metadata extends Component {
               <div className="col-4">
                 <label>Main</label>
                 <input
+                  name="main"
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.main }
-                  onChange={ this.onYoutubeIDChange }
+                  onChange={ this.onYoutubeIDChange.bind(this) }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
@@ -222,20 +223,22 @@ class Metadata extends Component {
 
                 <label>Cameras</label>
                 <input
+                  name="cameras"
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.cameras }
-                  onChange={ this.onYoutubeIDChange }
+                  onChange={ this.onYoutubeIDChange.bind(this) }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
               <div className="col-4">
                 <label>Screens</label>
                 <input
+                  name="screens"
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.screens }
-                  onChange={ this.onYoutubeIDChange }
+                  onChange={ this.onYoutubeIDChange.bind(this) }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
