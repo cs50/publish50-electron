@@ -1,6 +1,7 @@
 const { app } = require('electron')
 const settings = require('electron-settings')
 
+const logger = require('./logger')
 const validators = require('./validators')
 
 const defaults = {
@@ -52,7 +53,16 @@ function setDefaults(force) {
     return defaults
   }
 
-  const currentSettings = settings.getAll() || {}
+  let currentSettings;
+  try {
+    currentSettings = settings.getAll()
+  }
+  catch (err) {
+    logger.error(err)
+    logger.info('falling back to {}')
+    currentSettings = {}
+  }
+
   setDefaultsHelper(defaults, currentSettings)
 
   settings.setAll(currentSettings)
