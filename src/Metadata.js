@@ -37,6 +37,24 @@ class Metadata extends Component {
     }
   }
 
+  onYoutubeIDChange(e) {
+    const metadata = { ...this.state.metadata }
+    if (typeof(metadata.youtube) !== "object")
+      metadata.youtube = {}
+
+    let value = e.target.value
+
+    const matches = value.match(
+      /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+    )
+
+    if (matches && matches[2])
+      value = matches[2]
+
+    metadata.youtube[e.target.name] = value
+    this.setState({ metadata, updateDisabled: false })
+  }
+
   getInitialState() {
     return {
       loading: true,
@@ -196,25 +214,7 @@ class Metadata extends Component {
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.main }
-                  onChange={
-                    (e) => {
-                      const metadata = { ...this.state.metadata }
-                      if (typeof(metadata.youtube) !== "object")
-                        metadata.youtube = {}
-
-                      let value = e.target.value
-
-                      const matches = value.match(
-                        /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
-                      )
-
-                      if (matches && matches[2])
-                        value = matches[2]
-
-                      metadata.youtube.main = value
-                      this.setState({ metadata, updateDisabled: false })
-                    }
-                  }
+                  onChange={ this.onYoutubeIDChange }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
@@ -225,16 +225,7 @@ class Metadata extends Component {
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.cameras }
-                  onChange={
-                    (e) => {
-                      const metadata = { ...this.state.metadata }
-                      if (typeof(metadata.youtube) !== "object")
-                        metadata.youtube = {}
-
-                      metadata.youtube.cameras = e.target.value
-                      this.setState({ metadata, updateDisabled: false })
-                    }
-                  }
+                  onChange={ this.onYoutubeIDChange }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
@@ -244,16 +235,7 @@ class Metadata extends Component {
                   className="form-control"
                   placeholder="5azaK2cBKGw"
                   value={ this.state.metadata.youtube.screens }
-                  onChange={
-                    (e) => {
-                      const metadata = { ...this.state.metadata }
-                      if (typeof(metadata.youtube) !== "object")
-                        metadata.youtube = {}
-
-                      metadata.youtube.screens = e.target.value
-                      this.setState({ metadata, updateDisabled: false })
-                    }
-                  }
+                  onChange={ this.onYoutubeIDChange }
                 />
                 <small className="text-muted text-right">YouTube video link or identifier</small>
               </div>
