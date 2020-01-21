@@ -58,8 +58,7 @@ function setDefaults(force) {
     currentSettings = settings.getAll()
   }
   catch (err) {
-    // logger.error will prevent settings folder/file creation, not sure why atm
-    // logger.error(err)
+    logger.error(err)
     logger.info('falling back to {}')
     currentSettings = {}
   }
