@@ -1,6 +1,6 @@
 const { app } = require('electron')
 const settings = require('electron-settings')
-
+const fs = require('fs')
 const logger = require('./logger')
 const validators = require('./validators')
 
@@ -34,6 +34,12 @@ const defaults = {
     roleSessionName: 'publish50',
     roleArn: 'arn:aws:iam::518640797791:role/publish50Role'
   }
+}
+
+let appDataPath = app.getPath('appData')
+
+if (!fs.existsSync(String(appDataPath + '/publish50'))) {
+  fs.mkdirSync(String(appDataPath + '/publish50'))
 }
 
 function setDefaultsHelper(defaults, currentSettings) {
