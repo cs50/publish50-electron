@@ -157,17 +157,33 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-  Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
-    child.send({__abortJobId__: data.job.id})
+
+  const dialogOptions = {type: 'info', buttons: ['Cancel', 'Abort'], message: 'Do you want to abort the current job?'}
+  dialog.showMessageBox(dialogOptions, i => {
+    console.log("user has chosen: " + i)
+    if (i == 1) {
+      Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
+        child.send({__abortJobId__: data.job.id})
+      })
+    }
   })
+
 })
 
 ipc.on('abort jobs', (event, data) => {
-  Object.values(queues).forEach((queue) => {
-    Object.values(queue.childPool.retained).forEach((child) => {
-      child.send({__abortJobId__: '__self__'})
-    })
+
+  const dialogOptions = {type: 'info', buttons: ['Cancel', 'Abort'], message: 'Do you want to abort all the active jobs?'}
+  dialog.showMessageBox(dialogOptions, i => {
+    console.log("user has chosen: " + i)
+    if (i == 1) {
+      Object.values(queues).forEach((queue) => {
+        Object.values(queue.childPool.retained).forEach((child) => {
+          child.send({__abortJobId__: '__self__'})
+        })
+      })
+    }
   })
+
 })
 
 ipc.on('remove job', async(event, data) => {
