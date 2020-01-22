@@ -12,7 +12,6 @@ const preferences = require('./preferences')
 const updater = require('./updater')
 const { getBin } = require('./util')
 
-
 let mainWindow
 let queues
 
@@ -84,8 +83,8 @@ function initialize(queues) {
 
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
 
-  // open devtools if DEV_TOOLS is set to 1
-  if (parseInt(process.env.DEV_TOOLS)) {
+  // Open devtools if DEV_TOOLS is set and has a value, presumably 1
+  if (process.env.PUBLISH50_DEV_TOOLS) {
     mainWindow.webContents.openDevTools()
   }
 
@@ -98,15 +97,19 @@ app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Q', () => {
 
-    // prompt user before closing the application if there are active jobs
-    if (Object.keys(queues['queues']['video transcoding']['childPool'].retained).length != 0) {
-      const dialogOptions = {type: 'info', buttons: ['Cancel', 'Quit'], message: 'There are active jobs running, quit anyway?'}
-      dialog.showMessageBox(dialogOptions, i => {
-        console.log("user has chosen: " + i)
-        if (i == 1) { app.quit() }
-      })
+    // Prompt user before closing the application if there are active jobs
+    if (Object.keys(queues['queues']['video transcoding']['childPool'].retained).length > 0 ||
+        Object.keys(queues['queues']['image processing']['childPool'].retained).length > 0 ||
+        Object.keys(queues['queues']['metadata']['childPool'].retained).length > 0 ||
+        Object.keys(queues['queues']['youtube']['childPool'].retained).length > 0) {
+      dialog.showMessageBox(
+        {type: 'warning',
+         buttons: ['Cancel', 'Quit'],
+         message: 'Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks.\nAre you sure you want to quit?'},
+         i => {
+           if (i === 1) { app.quit() }
+         })
     } else { app.quit() }
-
   })
 
   // Download update, install when the app quits
@@ -160,6 +163,4 @@ app.on('activate', () => {
   }
 })
 
-app.on('quit', () => {
-  queues.close()
-})
+app.on('quit', () => { queues.close() })
