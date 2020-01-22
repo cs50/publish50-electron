@@ -83,7 +83,12 @@ function initialize(queues) {
   )
 
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
-  // mainWindow.webContents.openDevTools()
+
+  // open devtools if DEV_TOOLS is set to 1
+  if (parseInt(process.env.DEV_TOOLS)) {
+    mainWindow.webContents.openDevTools()
+  }
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
