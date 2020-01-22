@@ -12,6 +12,7 @@ const preferences = require('./preferences')
 const updater = require('./updater')
 const { getBin } = require('./util')
 
+
 let mainWindow
 let queues
 
@@ -90,7 +91,18 @@ function initialize(queues) {
 
 app.on('ready', async () => {
 
-  globalShortcut.register('CommandOrControl+Q', () => app.quit())
+  globalShortcut.register('CommandOrControl+Q', () => {
+
+    // prompt user before closing the application if there are active jobs
+    if (Object.keys(queues['queues']['video transcoding']['childPool'].retained).length != 0) {
+      const dialogOptions = {type: 'info', buttons: ['Cancel', 'Quit'], message: 'There are active jobs running, quit anyway?'}
+      dialog.showMessageBox(dialogOptions, i => {
+        console.log("user has chosen: " + i)
+        if (i == 1) { app.quit() }
+      })
+    } else { app.quit() }
+
+  })
 
   // Download update, install when the app quits
   updater.checkForUpdatesAndNotify()
@@ -143,4 +155,6 @@ app.on('activate', () => {
   }
 })
 
-app.on('quit', () => queues.close())
+app.on('quit', () => {
+  queues.close()
+})
