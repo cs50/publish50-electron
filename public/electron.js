@@ -97,10 +97,9 @@ app.on('ready', async () => {
   globalShortcut.register('CommandOrControl+Q', () => {
 
     // Prompt user before closing the application if there are active jobs
-    if (Object.keys(queues['queues']['video transcoding']['childPool'].retained).length > 0 ||
-        Object.keys(queues['queues']['image processing']['childPool'].retained).length > 0 ||
-        Object.keys(queues['queues']['metadata']['childPool'].retained).length > 0 ||
-        Object.keys(queues['queues']['youtube']['childPool'].retained).length > 0) {
+    if (Object.keys(queues['queues']).some((job) => {
+      return Object.keys(queues['queues'][job]['childPool'].retained).length > 0
+    })) {
       dialog.showMessageBox(
         {
           type: 'warning',
