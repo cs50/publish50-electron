@@ -158,28 +158,32 @@ ipc.on('get job', async (event, data) => {
 
 ipc.on('abort job', (event, data) => {
   dialog.showMessageBox(
-    {type: 'question',
-     buttons: ['Cancel', 'Abort'],
-     message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`},
-    userOption => {
-      if (userOption == 1) {
-      Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
-        child.send({__abortJobId__: data.job.id})
-      })
-    }
+    {
+      type: 'question',
+      buttons: ['Cancel', 'Abort'],
+      message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`
+    },
+    (selectedIndex) => {
+      if (selectedIndex === 1) {
+        Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
+          child.send({__abortJobId__: data.job.id})
+        })
+      }
+    })
   })
-})
 
 ipc.on('abort jobs', (event, data) => {
   dialog.showMessageBox(
-    {type: 'warning',
-     buttons: ['Cancel', 'Abort All'],
-     message: 'Are you sure you want to abort all running tasks?'},
-     userOption => {
-       if (userOption == 1) {
-         Object.values(queues).forEach((queue) => {
-           Object.values(queue.childPool.retained).forEach((child) => {
-             child.send({__abortJobId__: '__self__'})
+    {
+      type: 'warning',
+      buttons: ['Cancel', 'Abort all'],
+      message: 'Are you sure you want to abort all running tasks?'
+    },
+    (selectedIndex) => {
+      if (selectedIndex === 1) {
+        Object.values(queues).forEach((queue) => {
+          Object.values(queue.childPool.retained).forEach((child) => {
+            child.send({__abortJobId__: '__self__'})
           })
         })
       }

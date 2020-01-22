@@ -83,7 +83,6 @@ function initialize(queues) {
 
   mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
 
-  // Open devtools if DEV_TOOLS is set and has a value, presumably 1
   if (process.env.PUBLISH50_DEV_TOOLS) {
     mainWindow.webContents.openDevTools()
   }
@@ -103,14 +102,20 @@ app.on('ready', async () => {
         Object.keys(queues['queues']['metadata']['childPool'].retained).length > 0 ||
         Object.keys(queues['queues']['youtube']['childPool'].retained).length > 0) {
       dialog.showMessageBox(
-        {type: 'warning',
-         buttons: ['Cancel', 'Quit'],
-         message: 'Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks.\nAre you sure you want to quit?'},
-         i => {
-           if (i === 1) { app.quit() }
-         })
-    } else { app.quit() }
-  })
+        {
+          type: 'warning',
+          buttons: ['Cancel', 'Quit'],
+          message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks.\nAre you sure you want to quit?`
+        },
+        (selectedIndex) => {
+          if (selectedIndex === 1) {
+            app.quit()
+          }
+        })
+      } else {
+        app.quit()
+      }
+    })
 
   // Download update, install when the app quits
   updater.checkForUpdatesAndNotify()
@@ -163,4 +168,4 @@ app.on('activate', () => {
   }
 })
 
-app.on('quit', () => { queues.close() })
+app.on('quit', () => queues.close())
