@@ -100,12 +100,14 @@ app.on('ready', async () => {
     if (isBoxOpen) {
       return
     }
+    else {
+      isBoxOpen = true
+    }
 
     // Prompt user before closing the application if there are active jobs
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
-      isBoxOpen = true
       dialog.showMessageBox(
         {
           type: 'question',
