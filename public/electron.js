@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, globalShortcut, Menu } = require('electron')
 
 app.on('ready', async () => {
+
   const path = require('path')
   const redis = require('redis')
   const url = require('url')
@@ -16,6 +17,7 @@ app.on('ready', async () => {
 
   let mainWindow
   let queues
+  let isBoxOpen = false
 
   async function startRedis() {
     const redisPort = preferences.get('general.redisPort')
@@ -95,10 +97,15 @@ app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Q', () => {
 
+    if (isBoxOpen) {
+      return
+    }
+
     // Prompt user before closing the application if there are active jobs
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
+      isBoxOpen = true
       dialog.showMessageBox(
         {
           type: 'question',
@@ -108,6 +115,9 @@ app.on('ready', async () => {
         (selectedIndex) => {
           if (selectedIndex === 1) {
             app.quit()
+          }
+          else {
+            isBoxOpen = false
           }
         })
       }

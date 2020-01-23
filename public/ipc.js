@@ -11,6 +11,8 @@ const logger = require('./logger')
 const googleOAuth = require('./google-oauth')
 const youtube = require('./youtube')
 
+let isBoxOpen = false
+
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
   if (!currentWindow)
@@ -19,7 +21,6 @@ function sendToCurrentWindow(event, data) {
   currentWindow.send(event, data)
   return true
 }
-
 
 // TODO move to images?
 function resizeStills(data) {
@@ -157,6 +158,14 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
+
+  if (isBoxOpen) {
+    return
+  }
+  else {
+    isBoxOpen = true
+  }
+
   dialog.showMessageBox(
     {
       type: 'question',
@@ -168,11 +177,23 @@ ipc.on('abort job', (event, data) => {
         Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
           child.send({__abortJobId__: data.job.id})
         })
+        isBoxOpen = false
+      }
+      else {
+        isBoxOpen = false
       }
     })
   })
 
 ipc.on('abort jobs', (event, data) => {
+
+  if (isBoxOpen) {
+    return
+  }
+  else {
+    isBoxOpen = true
+  }
+
   dialog.showMessageBox(
     {
       type: 'question',
@@ -186,6 +207,10 @@ ipc.on('abort jobs', (event, data) => {
             child.send({__abortJobId__: '__self__'})
           })
         })
+        isBoxOpen = false
+      }
+      else {
+        isBoxOpen = false
       }
     })
   })
