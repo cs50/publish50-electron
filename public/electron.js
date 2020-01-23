@@ -1,98 +1,98 @@
 const { app, BrowserWindow, dialog, globalShortcut, Menu } = require('electron')
-const path = require('path')
-const redis = require('redis')
-const url = require('url')
 
-const util = require('util')
-const childProcess = require('child_process')
-const execFile = util.promisify(childProcess.execFile)
 
-const logger = require('./logger')
-const preferences = require('./preferences')
-const updater = require('./updater')
-const { getBin } = require('./util')
+app.on('ready', async () => {
+  const path = require('path')
+  const redis = require('redis')
+  const url = require('url')
 
-let mainWindow
-let queues
+  const util = require('util')
+  const childProcess = require('child_process')
+  const execFile = util.promisify(childProcess.execFile)
 
-async function startRedis() {
-  const redisPort = preferences.get('general.redisPort')
-  await execFile(
-    getBin('redis-server'),
-    [
-      '--daemonize', 'yes',
-      '--port', redisPort,
-      '--appendonly', 'yes',
-      '--appendfsync', 'everysec'
-    ],
-    { cwd: app.getPath('userData') }
-  )
+  const logger = require('./logger')
+  const preferences = require('./preferences')
+  const updater = require('./updater')
+  const { getBin } = require('./util')
 
-  return new Promise((resolve, reject) => {
-    const client = redis.createClient({
-      port: redisPort,
-      retry_strategy(options) {
-        if (options.error && options.error.code === 'ECONNREFUSED') {
-          logger.error(options.error)
+  let mainWindow
+  let queues
+
+  async function startRedis() {
+    const redisPort = preferences.get('general.redisPort')
+    await execFile(
+      getBin('redis-server'),
+      [
+        '--daemonize', 'yes',
+        '--port', redisPort,
+        '--appendonly', 'yes',
+        '--appendfsync', 'everysec'
+      ],
+      { cwd: app.getPath('userData') }
+    )
+
+    return new Promise((resolve, reject) => {
+      const client = redis.createClient({
+        port: redisPort,
+        retry_strategy(options) {
+          if (options.error && options.error.code === 'ECONNREFUSED') {
+            logger.error(options.error)
+          }
+
+          if (options.attempt > 3) {
+            const err = new Error(
+              `Are you sure port ${redisPort} is available? Try killing any ` +
+              `process listening on port ${redisPort} or changing redis port ` +
+              'in Preferences, restart publish50, and try again!'
+            )
+
+            reject(err)
+            return err
+          }
+
+          // Reconnect after 3 seconds
+          return 3000
         }
+      })
 
-        if (options.attempt > 3) {
-          const err = new Error(
-            `Are you sure port ${redisPort} is available? Try killing any ` +
-            `process listening on port ${redisPort} or changing redis port ` +
-            'in Preferences, restart publish50, and try again!'
-          )
+      client.once('connect', () => {
+        // Rewrite AOF every minute
+        setInterval(() => {
+          client.bgrewriteaof()
+        }, 60000)
 
-          reject(err)
-          return err
-        }
+        resolve()
+      })
+    })
+  }
 
-        // Reconnect after 3 seconds
-        return 3000
+  function initialize(queues) {
+    mainWindow = new BrowserWindow({
+      width: 1600,
+      height: 900,
+      icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
+      show: false,
+      webPreferences: {
+        contextIsolation: false,
+        nodeIntegration: false,
+        preload: path.join(__dirname, 'preload.js')
       }
     })
 
-    client.once('connect', () => {
-      // Rewrite AOF every minute
-      setInterval(() => {
-        client.bgrewriteaof()
-      }, 60000)
+    mainWindow.loadURL(process.env.ELECTRON_DEV ?
+      'http://localhost:3000' :
+      `file://${path.join(__dirname, '../build/index.html')}`
+    )
 
-      resolve()
-    })
-  })
-}
-
-function initialize(queues) {
-  mainWindow = new BrowserWindow({
-    width: 1600,
-    height: 900,
-    icon: path.join(__dirname, '../src/assets/logos/128x128.png'),
-    show: false,
-    webPreferences: {
-      contextIsolation: false,
-      nodeIntegration: false,
-      preload: path.join(__dirname, 'preload.js')
+    mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
+    // mainWindow.webContents.openDevTools()
+    if (process.env.PUBLISH50_DEV_TOOLS) {
+      mainWindow.webContents.openDevTools()
     }
-  })
-
-  mainWindow.loadURL(process.env.ELECTRON_DEV ?
-    'http://localhost:3000' :
-    `file://${path.join(__dirname, '../build/index.html')}`
-  )
-
-  mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
-
-  if (process.env.PUBLISH50_DEV_TOOLS) {
-    mainWindow.webContents.openDevTools()
+    mainWindow.on('closed', () => {
+      mainWindow = null
+    })
   }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
-}
-
-app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Q', () => {
 
@@ -153,18 +153,18 @@ app.on('ready', async () => {
   queues = require('./queues')
   initialize(queues)
   require('./ipc')
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
 
-app.on('activate', () => {
-  if (mainWindow === null) {
-    initialize(queues)
-  }
-})
+  app.on('activate', () => {
+    if (mainWindow === null) {
+      initialize(queues)
+    }
+  })
 
-app.on('quit', () => queues.close())
+  app.on('quit', () => queues.close())
+})
