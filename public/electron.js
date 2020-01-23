@@ -1,6 +1,5 @@
 const { app, BrowserWindow, dialog, globalShortcut, Menu } = require('electron')
 
-
 app.on('ready', async () => {
   const path = require('path')
   const redis = require('redis')
@@ -97,21 +96,22 @@ app.on('ready', async () => {
   globalShortcut.register('CommandOrControl+Q', () => {
 
     // Prompt user before closing the application if there are active jobs
-    if (Object.keys(queues['queues']).some((job) => {
-      return Object.keys(queues['queues'][job]['childPool'].retained).length > 0
+    if (Object.keys(queues['queues']).some((qname) => {
+      return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
       dialog.showMessageBox(
         {
-          type: 'warning',
+          type: 'question',
           buttons: ['Cancel', 'Quit'],
-          message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks.\nAre you sure you want to quit?`
+          message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
         },
         (selectedIndex) => {
           if (selectedIndex === 1) {
             app.quit()
           }
         })
-      } else {
+      }
+      else {
         app.quit()
       }
     })

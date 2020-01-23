@@ -175,7 +175,7 @@ ipc.on('abort job', (event, data) => {
 ipc.on('abort jobs', (event, data) => {
   dialog.showMessageBox(
     {
-      type: 'warning',
+      type: 'question',
       buttons: ['Cancel', 'Abort all'],
       message: 'Are you sure you want to abort all running tasks?'
     },

@@ -36,12 +36,6 @@ const defaults = {
   }
 }
 
-// Ensure folder 'publish50' exists in application support folder
-let appDataPath = app.getPath('appData')
-if (!fs.existsSync(String(appDataPath + '/publish50'))) {
-  fs.mkdirSync(String(appDataPath + '/publish50'))
-}
-
 function setDefaultsHelper(defaults, currentSettings) {
   Object.keys(defaults).forEach((key) => {
     if (!currentSettings.hasOwnProperty(key)) {
