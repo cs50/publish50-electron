@@ -17,7 +17,8 @@ app.on('ready', async () => {
 
   let mainWindow
   let queues
-  let isBoxOpen = false
+
+  process.env['IS_BOX_OPEN'] = 0
 
   async function startRedis() {
     const redisPort = preferences.get('general.redisPort')
@@ -97,11 +98,11 @@ app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Q', () => {
 
-    if (isBoxOpen) {
+    if (parseInt(process.env.IS_BOX_OPEN)) {
       return
     }
     else {
-      isBoxOpen = true
+      process.env['IS_BOX_OPEN'] = 1
     }
 
     // Prompt user before closing the application if there are active jobs
@@ -115,11 +116,9 @@ app.on('ready', async () => {
           message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
         },
         (selectedIndex) => {
+          process.env['IS_BOX_OPEN'] = 0
           if (selectedIndex === 1) {
             app.quit()
-          }
-          else {
-            isBoxOpen = false
           }
         })
       }

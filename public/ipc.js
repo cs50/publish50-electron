@@ -1,7 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
 const { BrowserWindow, dialog, ipcMain: ipc } = require('electron')
-
 const { distFolder } = require('./util')
 const preferences = require('./preferences')
 const { queues } = require('./queues')
@@ -10,8 +9,6 @@ const { rasters } = require('./constants')
 const logger = require('./logger')
 const googleOAuth = require('./google-oauth')
 const youtube = require('./youtube')
-
-let isBoxOpen = false
 
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
@@ -63,7 +60,6 @@ ipc.on('update metadata', (event, data) => {
     ...preferences.get('cloudfront')
   })
 })
-
 
 // TODO move somewhere else?
 function transcode(data) {
@@ -159,11 +155,11 @@ ipc.on('get job', async (event, data) => {
 
 ipc.on('abort job', (event, data) => {
 
-  if (isBoxOpen) {
+  if (parseInt(process.env.IS_BOX_OPEN)) {
     return
   }
   else {
-    isBoxOpen = true
+    process.env['IS_BOX_OPEN'] = 1
   }
 
   dialog.showMessageBox(
@@ -173,25 +169,22 @@ ipc.on('abort job', (event, data) => {
       message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`
     },
     (selectedIndex) => {
+      process.env['IS_BOX_OPEN'] = 0
       if (selectedIndex === 1) {
         Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
           child.send({__abortJobId__: data.job.id})
         })
-        isBoxOpen = false
-      }
-      else {
-        isBoxOpen = false
       }
     })
   })
 
 ipc.on('abort jobs', (event, data) => {
 
-  if (isBoxOpen) {
+  if (parseInt(process.env.IS_BOX_OPEN)) {
     return
   }
   else {
-    isBoxOpen = true
+    process.env['IS_BOX_OPEN'] = 1
   }
 
   dialog.showMessageBox(
@@ -202,15 +195,12 @@ ipc.on('abort jobs', (event, data) => {
     },
     (selectedIndex) => {
       if (selectedIndex === 1) {
+        process.env['IS_BOX_OPEN'] = 0
         Object.values(queues).forEach((queue) => {
           Object.values(queue.childPool.retained).forEach((child) => {
             child.send({__abortJobId__: '__self__'})
           })
         })
-        isBoxOpen = false
-      }
-      else {
-        isBoxOpen = false
       }
     })
   })
