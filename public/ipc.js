@@ -9,7 +9,7 @@ const { rasters } = require('./constants')
 const logger = require('./logger')
 const googleOAuth = require('./google-oauth')
 const youtube = require('./youtube')
-const _dialog = require('./dialog')
+const dialog_ = require('./dialog')
 
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
@@ -155,7 +155,7 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-  _dialog.showMessageBox(
+  dialog_.showMessageBox(
     {
       type: 'question',
       buttons: ['Cancel', 'Abort'],
@@ -172,7 +172,7 @@ ipc.on('abort job', (event, data) => {
 })
 
 ipc.on('abort jobs', (event, data) => {
-  _dialog.showMessageBox(
+  dialog_.showMessageBox(
     {
       type: 'question',
       buttons: ['Cancel', 'Abort all'],
