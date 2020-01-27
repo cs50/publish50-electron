@@ -1,6 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
-const { BrowserWindow, dialog, ipcMain: ipc } = require('electron')
+const { BrowserWindow, ipcMain: ipc } = require('electron')
 const { distFolder } = require('./util')
 const preferences = require('./preferences')
 const { queues } = require('./queues')
@@ -155,36 +155,39 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-
-  let userResponse = message.show(
-    'question',
-    ['Cancel', 'Abort'],
-    `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`,
+  message.showMessageBox(
+    {
+      type: 'question',
+      buttons: ['Cancel', 'Abort'],
+      message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`
+    },
+    (selectedIndex) => {
+      if (selectedIndex === 1) {
+        Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
+          child.send({__abortJobId__: data.job.id})
+        })
+      }
+    }
   )
-
-  if (userResponse) {
-    Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
-      child.send({__abortJobId__: data.job.id})
-    })
-  }
-
 })
 
 ipc.on('abort jobs', (event, data) => {
-
-  let userResponse = message.show(
-    'question',
-    ['Cancel', 'Abort all'],
-    'Are you sure you want to abort all running tasks?',
+  message.showMessageBox(
+    {
+      type: 'question',
+      buttons: ['Cancel', 'Abort all'],
+      message: 'Are you sure you want to abort all running tasks?'
+    },
+    (selectedIndex) => {
+      if (selectedIndex === 1) {
+        Object.values(queues).forEach((queue) => {
+          Object.values(queue.childPool.retained).forEach((child) => {
+            child.send({__abortJobId__: '__self__'})
+          })
+        })
+      }
+    }
   )
-
-  if (userResponse) {
-    Object.values(queues).forEach((queue) => {
-      Object.values(queue.childPool.retained).forEach((child) => {
-        child.send({__abortJobId__: '__self__'})
-      })
-    })
-  }
 })
 
 ipc.on('remove job', async(event, data) => {

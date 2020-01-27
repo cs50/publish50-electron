@@ -3,7 +3,7 @@ const { app, dialog } = require('electron')
 let isBoxOpen = false
 let userResponse = -1
 
-function show(type, buttons, message) {
+function showMessageBox(options, cb) {
 
   if (isBoxOpen) {
     return
@@ -12,16 +12,13 @@ function show(type, buttons, message) {
     isBoxOpen = true
   }
 
-  userResponse = dialog.showMessageBox(
-    {
-      type: type,
-      buttons: buttons,
-      message: message
-    }
-  )
-  isBoxOpen = false
+  dialog.showMessageBox(
+    options,
+    (selectedIndex) => {
+      cb(selectedIndex)
+    })
 
-  return userResponse
+  isBoxOpen = false
 }
 
-module.exports = { show }
+module.exports = { showMessageBox }

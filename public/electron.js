@@ -101,14 +101,18 @@ app.on('ready', async () => {
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
-      let userResponse = message.show(
-        'question',
-        ['Cancel', 'Quit'],
-        `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
+      message.showMessageBox(
+        {
+          type: 'question',
+          buttons: ['Cancel', 'Quit'],
+          message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
+        },
+        (selectedIndex) => {
+          if (selectedIndex === 1) {
+            app.quit()
+          }
+        }
       )
-      if (userResponse) {
-        app.quit()
-      }
     }
     else {
       app.quit()
