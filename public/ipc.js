@@ -155,9 +155,6 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-
-  console.log(data)
-
   _dialog.showMessageBox(
     {
       type: 'question',
