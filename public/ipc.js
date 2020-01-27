@@ -1,6 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
-const { BrowserWindow, ipcMain: ipc } = require('electron')
+const { BrowserWindow, dialog, ipcMain: ipc } = require('electron')
 const { distFolder } = require('./util')
 const preferences = require('./preferences')
 const { queues } = require('./queues')
