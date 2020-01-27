@@ -14,7 +14,7 @@ app.on('ready', async () => {
   const preferences = require('./preferences')
   const updater = require('./updater')
   const { getBin } = require('./util')
-  const _dialog = require('./dialog.js')
+  const dialog = require('./dialog.js')
 
   let mainWindow
   let queues
@@ -101,7 +101,7 @@ app.on('ready', async () => {
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
-      _dialog.showMessageBox(
+      dialog.showMessageBox(
         {
           type: 'question',
           buttons: ['Cancel', 'Quit'],
@@ -145,7 +145,7 @@ app.on('ready', async () => {
   }
   catch (err) {
     logger.error(err)
-    _dialog.showMessageBox({
+    dialog.showMessageBox({
       type: 'error',
       buttons: [ 'OK' ],
       message: 'Failed to start redis server',
