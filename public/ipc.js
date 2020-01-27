@@ -9,7 +9,7 @@ const { rasters } = require('./constants')
 const logger = require('./logger')
 const googleOAuth = require('./google-oauth')
 const youtube = require('./youtube')
-const message = require('./message')
+const _dialog = require('./dialog')
 
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
@@ -155,11 +155,14 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-  message.showMessageBox(
+
+  console.log(data)
+
+  _dialog.showMessageBox(
     {
       type: 'question',
       buttons: ['Cancel', 'Abort'],
-      message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`
+      message: `Are you sure you want to abort the selected ${data['job']['name']} job?`
     },
     (selectedIndex) => {
       if (selectedIndex === 1) {
@@ -172,7 +175,7 @@ ipc.on('abort job', (event, data) => {
 })
 
 ipc.on('abort jobs', (event, data) => {
-  message.showMessageBox(
+  _dialog.showMessageBox(
     {
       type: 'question',
       buttons: ['Cancel', 'Abort all'],

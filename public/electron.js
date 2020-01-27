@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, globalShortcut, Menu } = require('electron')
+const { app, BrowserWindow, globalShortcut, Menu } = require('electron')
 
 app.on('ready', async () => {
 
@@ -14,7 +14,7 @@ app.on('ready', async () => {
   const preferences = require('./preferences')
   const updater = require('./updater')
   const { getBin } = require('./util')
-  const message = require('./message.js')
+  const _dialog = require('./dialog.js')
 
   let mainWindow
   let queues
@@ -101,7 +101,7 @@ app.on('ready', async () => {
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
-      message.showMessageBox(
+      _dialog.showMessageBox(
         {
           type: 'question',
           buttons: ['Cancel', 'Quit'],
@@ -145,7 +145,7 @@ app.on('ready', async () => {
   }
   catch (err) {
     logger.error(err)
-    dialog.showMessageBox({
+    _dialog.showMessageBox({
       type: 'error',
       buttons: [ 'OK' ],
       message: 'Failed to start redis server',
