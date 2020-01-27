@@ -9,6 +9,7 @@ const { rasters } = require('./constants')
 const logger = require('./logger')
 const googleOAuth = require('./google-oauth')
 const youtube = require('./youtube')
+const message = require('./message')
 
 function sendToCurrentWindow(event, data) {
   const currentWindow = BrowserWindow.getFocusedWindow()
@@ -155,55 +156,36 @@ ipc.on('get job', async (event, data) => {
 
 ipc.on('abort job', (event, data) => {
 
-  if (parseInt(process.env.IS_BOX_OPEN)) {
-    return
-  }
-  else {
-    process.env['IS_BOX_OPEN'] = 1
+  let userResponse = message.show(
+    'question',
+    ['Cancel', 'Abort'],
+    `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`,
+  )
+
+  if (userResponse) {
+    Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
+      child.send({__abortJobId__: data.job.id})
+    })
   }
 
-  dialog.showMessageBox(
-    {
-      type: 'question',
-      buttons: ['Cancel', 'Abort'],
-      message: `Are you sure you would like to abort transcoding "${data['job']['data'].videoPath}" to ${data['job']['data'].raster} ?`
-    },
-    (selectedIndex) => {
-      process.env['IS_BOX_OPEN'] = 0
-      if (selectedIndex === 1) {
-        Object.values(queues[data.job.queue.name].childPool.retained).forEach((child) => {
-          child.send({__abortJobId__: data.job.id})
-        })
-      }
-    })
-  })
+})
 
 ipc.on('abort jobs', (event, data) => {
 
-  if (parseInt(process.env.IS_BOX_OPEN)) {
-    return
-  }
-  else {
-    process.env['IS_BOX_OPEN'] = 1
-  }
+  let userResponse = message.show(
+    'question',
+    ['Cancel', 'Abort all'],
+    'Are you sure you want to abort all running tasks?',
+  )
 
-  dialog.showMessageBox(
-    {
-      type: 'question',
-      buttons: ['Cancel', 'Abort all'],
-      message: 'Are you sure you want to abort all running tasks?'
-    },
-    (selectedIndex) => {
-      if (selectedIndex === 1) {
-        process.env['IS_BOX_OPEN'] = 0
-        Object.values(queues).forEach((queue) => {
-          Object.values(queue.childPool.retained).forEach((child) => {
-            child.send({__abortJobId__: '__self__'})
-          })
-        })
-      }
+  if (userResponse) {
+    Object.values(queues).forEach((queue) => {
+      Object.values(queue.childPool.retained).forEach((child) => {
+        child.send({__abortJobId__: '__self__'})
+      })
     })
-  })
+  }
+})
 
 ipc.on('remove job', async(event, data) => {
   try {

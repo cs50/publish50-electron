@@ -14,11 +14,10 @@ app.on('ready', async () => {
   const preferences = require('./preferences')
   const updater = require('./updater')
   const { getBin } = require('./util')
+  const message = require('./message.js')
 
   let mainWindow
   let queues
-
-  process.env['IS_BOX_OPEN'] = 0
 
   async function startRedis() {
     const redisPort = preferences.get('general.redisPort')
@@ -98,34 +97,23 @@ app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Q', () => {
 
-    if (parseInt(process.env.IS_BOX_OPEN)) {
-      return
-    }
-    else {
-      process.env['IS_BOX_OPEN'] = 1
-    }
-
     // Prompt user before closing the application if there are active jobs
     if (Object.keys(queues['queues']).some((qname) => {
       return Object.keys(queues['queues'][qname]['childPool'].retained).length > 0
     })) {
-      dialog.showMessageBox(
-        {
-          type: 'question',
-          buttons: ['Cancel', 'Quit'],
-          message: `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
-        },
-        (selectedIndex) => {
-          process.env['IS_BOX_OPEN'] = 0
-          if (selectedIndex === 1) {
-            app.quit()
-          }
-        })
-      }
-      else {
+      let userResponse = message.show(
+        'question',
+        ['Cancel', 'Quit'],
+        `Looks like publish50 is currently running some tasks. Quitting publish50 will abort all running tasks. Are you sure you want to quit?`
+      )
+      if (userResponse) {
         app.quit()
       }
-    })
+    }
+    else {
+      app.quit()
+    }
+  })
 
   // Download update, install when the app quits
   updater.checkForUpdatesAndNotify()
