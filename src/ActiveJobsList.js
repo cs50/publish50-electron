@@ -1,9 +1,10 @@
 import React from 'react'
-import JobDescription from './JobDescription'
 
 import './ActiveJobsList.css'
 import abortAllIcon from './assets/images/abort_all.svg'
 import doneIcon from './assets/images/done.svg'
+
+import { getJobDescription } from './job_helper'
 
 class ActiveJobsList extends React.Component {
   render() {
@@ -25,6 +26,7 @@ class ActiveJobsList extends React.Component {
       <ul className="list-group">
         {
           progressJobs.map((job) => {
+            const jobDescription = getJobDescription(job)
             return <li className="mt-2 list-group-item" key={ `${job.name}:${job.id}` }>
               <button
                 type="button"
@@ -33,13 +35,13 @@ class ActiveJobsList extends React.Component {
                 onClick={
                   (e) => {
                     e.target.setAttribute('disabled', true)
-                    this.props.onClose(job)
+                    this.props.onClose(job, jobDescription)
                   }
                 }>
                 <span aria-hidden="true">&times;</span>
               </button>
               <div>
-                <JobDescription job={ job } />
+                {jobDescription}
               </div>
 
               <div className="progress mt-3">

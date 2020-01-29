@@ -1,12 +1,12 @@
 {
   "name": "publish50",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Automates video transcoding and publishing",
   "author": "CS50",
   "private": true,
   "dependencies": {
     "aws-sdk": "^2.401.0",
-    "bootstrap": "^4.2.1",
+    "bootstrap": "^4.3.1",
     "bull": "^3.6.0",
     "electron-log": "^3.0.1",
     "electron-settings": "^3.2.0",
@@ -14,7 +14,7 @@
     "fs-extra": "^7.0.1",
     "google-auth-library": "^3.1.0",
     "googleapis": "^37.2.0",
-    "jquery": "^3.3.1",
+    "jquery": "^3.4.0",
     "node-fetch": "^2.3.0",
     "popper.js": "^1.14.7",
     "react": "^16.8.1",
