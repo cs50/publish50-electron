@@ -61,8 +61,8 @@ class Home extends Component {
     clearInterval(this.interval)
   }
 
-  abort(job) {
-    ipc.send('abort job', { job })
+  abort(job, jobDescription) {
+    ipc.send('abort job', { job, jobDescription })
   }
 
   abortAll() {

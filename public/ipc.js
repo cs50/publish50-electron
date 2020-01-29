@@ -155,15 +155,18 @@ ipc.on('get job', async (event, data) => {
 })
 
 ipc.on('abort job', (event, data) => {
-<<<<<<< HEAD
-  _dialog.showMessageBox(
-=======
   dialog_.showMessageBox(
->>>>>>> handlebars
     {
       type: 'question',
       buttons: ['Cancel', 'Abort'],
       message: `Are you sure you want to abort the selected ${data['job']['name']} job?`
+=======
+  dialog_.showMessageBox(
+    {
+      type: 'question',
+      buttons: ['Cancel', 'Abort'],
+      message: `Are you sure you want to abort ${`"${data.jobDescription}"`  || 'this task'}?`
+>>>>>>> develop
     },
     (selectedIndex) => {
       if (selectedIndex === 1) {

@@ -86,10 +86,12 @@ app.on('ready', async () => {
     )
 
     mainWindow.webContents.on('did-finish-load', () => mainWindow.show())
+
     // mainWindow.webContents.openDevTools()
     if (process.env.PUBLISH50_DEV_TOOLS) {
       mainWindow.webContents.openDevTools()
     }
+
     mainWindow.on('closed', () => {
       mainWindow = null
     })
