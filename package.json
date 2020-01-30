@@ -30,7 +30,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "concurrently 'BROWSER=none yarn start' 'wait-on http://localhost:3000 && ELECTRON_DEV=1 electron .'",
-    "dist": "yarn electron-builder && electron-builder -c.extraMetadata.main=build/electron.js",
+    "dist": "yarn build && electron-builder -c.extraMetadata.main=build/electron.js",
     "release": "electron-builder -c.extraMetadata.main=build/electron.js"
   },
   "eslintConfig": {
