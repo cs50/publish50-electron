@@ -172,22 +172,27 @@ ipc.on('abort job', (event, data) => {
 })
 
 ipc.on('abort jobs', (event, data) => {
-  dialog_.showMessageBox(
-    {
-      type: 'question',
-      buttons: ['Cancel', 'Abort all'],
-      message: 'Are you sure you want to abort all running tasks?'
-    },
-    (selectedIndex) => {
-      if (selectedIndex === 1) {
-        Object.values(queues).forEach((queue) => {
-          Object.values(queue.childPool.retained).forEach((child) => {
-            child.send({__abortJobId__: '__self__'})
-          })
-        })
-      }
+  Object.values(queues).map((each) => {
+    if (Object.values(each.childPool['retained']).length > 0) {
+      dialog_.showMessageBox(
+        {
+          type: 'question',
+          buttons: ['Cancel', 'Abort all'],
+          message: 'Are you sure you want to abort all running tasks?'
+        },
+        (selectedIndex) => {
+          if (selectedIndex === 1) {
+            Object.values(queues).forEach((queue) => {
+              Object.values(queue.childPool.retained).forEach((child) => {
+                child.send({__abortJobId__: '__self__'})
+              })
+            })
+          }
+        }
+      )
+      return
     }
-  )
+  })
 })
 
 ipc.on('remove job', async(event, data) => {
