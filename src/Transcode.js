@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Redirect } from 'react-router'
 
 import DropZone from './DropZone'
 
@@ -35,6 +36,7 @@ class Transcode extends Component {
   onSubmit(files, resetDropzone) {
     ipc.send('transcode', { files: Array.from(files), ...this.state })
     this.setState(this.getInitialState())
+    this.setState({redirect: true})
     resetDropzone()
   }
 
@@ -55,7 +57,14 @@ class Transcode extends Component {
   }
 
   render() {
+
+    if (this.state.redirect) {
+      return <Redirect push to="/home" />;
+    }
+
     return (
+
+
       <div className="w-75 mx-auto mt-5">
         <DropZone accept=".mov,.mp4" caption="Transcode" onSubmit={ this.onSubmit.bind(this) } onChange={ this.onDropzoneChange.bind(this) }/>
         <div className={`mt-5 mx-auto ${(this.state.formHidden && "d-none") || ""}`}>

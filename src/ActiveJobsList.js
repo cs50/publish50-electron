@@ -1,4 +1,5 @@
 import React from 'react'
+import { NavLink, Route } from 'react-router-dom'
 
 import './ActiveJobsList.css'
 import abortAllIcon from './assets/images/abort_all.svg'
@@ -66,11 +67,12 @@ class ActiveJobsList extends React.Component {
 
         {
           progressJobs.length < 1 &&
+          <React.Fragment>
             <img
               style={
                 {
                   width: '64px',
-                  position: 'absolute',
+                  position: 'relative',
                   top: '30%',
                   left: '50%',
                   marginLeft: '-24px',
@@ -80,6 +82,11 @@ class ActiveJobsList extends React.Component {
               src={doneIcon}
               alt='No jobs'
             />
+            <p className="text-center">No job running</p>
+            <NavLink to="/transcode" className="text-center">
+              Add trancode task here!
+            </NavLink>
+            </React.Fragment>
         }
       </ul>
     </div>
