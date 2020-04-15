@@ -51,17 +51,6 @@ ipc.on('resize stills', (event, data) => {
   resizeStills(data)
 })
 
-ipc.on('update metadata', (event, data) => {
-  const { bucket, prefix, metadata } = data
-  queues['metadata'].add('update metadata', {
-    ...preferences.get('awsCredentials'),
-    bucket,
-    prefix,
-    metadata,
-    ...preferences.get('cloudfront')
-  })
-})
-
 // TODO move somewhere else?
 function transcode(data) {
   const jobPromises = []

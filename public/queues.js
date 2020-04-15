@@ -7,7 +7,6 @@ const preferences = require('./preferences')
 const queueNames = [
   'image processing',
   'video transcoding',
-  'metadata',
   'youtube'
 ]
 
@@ -27,8 +26,6 @@ queueNames.forEach((queueName) => {
     logger.error(err.toString())
   }
 })
-
-queues['metadata'].process('update metadata', 1, path.join(jobsPath, 'metadata.js'))
 
 queues['image processing'].process(
   'resize still',

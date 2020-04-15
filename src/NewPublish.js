@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 
 import './NewPublish.css'
 
-import CDNPath from './CDNPath'
 import DropZone from './DropZone'
 
 const { ipc } = window
@@ -50,7 +49,7 @@ class NewPublish extends Component {
       },
       twoPasses: true,
       youtube: {
-        upload: true,
+        upload: false,
         privacyStatus: 'unlisted'
       },
       metadata: {
@@ -92,8 +91,6 @@ class NewPublish extends Component {
   }
 
   _handlePreferences(event, preferences) {
-    // this.setState({ loading: false, preferences, prefix: preferences.s3.prefix })
-    //
     this.preferences = preferences
     this.setState({ loading: false })
   }
@@ -107,7 +104,6 @@ class NewPublish extends Component {
   }
 
   render() {
-    const { awsCredentials, s3 } = this.preferences
     return <div className="w-75 mx-auto mt-5">
         <DropZone accept=".mov,.mp4,.png" caption="Start" onSubmit={ this.onSubmit.bind(this) } onChange={ this.onDropzoneChange.bind(this) }/>
         { !this.state.loading &&
@@ -116,112 +112,49 @@ class NewPublish extends Component {
             <form>
               <div className="row">
                 <div className="col pr-5">
-                  <div className="form-group">
-                    <label>Location</label>
-                    <CDNPath
-                      awsCredentials={ awsCredentials }
-                      bucket={ s3.bucket }
-                      prefix={ s3.prefix }
-                      onData={
-                        (metadata) => {
-                          if (!metadata.youtube)
-                            metadata.youtube = {}
-
-                          this.setState({ metadata })
-                        }
-                      }
-
-                      onSelect={
-                        (prefix) => this.setState({ prefix })
-                      }
-
-                      onError={
-                        (s3ClientError) => this.setState({ s3ClientError })
-                      }
-                    />
-                  </div>
 
                   <div className="form-group">
-                    <label>Title</label>
-                    <input
-                      className="form-control"
-                      placeholder="CS50 2019 - Lecture 0 - Computational Thinking, Scratch"
-                      onChange={
-                        (e) => {
-                          const metadata = { ...this.state.metadata }
-                          metadata.title = e.target.value
-                          this.setState({ metadata, updateDisabled: false })
-                        }
-                      }
-                      value={ this.state.metadata.title }
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea
-                      className="form-control"
-                      placeholder="This is a sample description."
-                      value={ this.state.metadata.description }
-                      onChange={
-                        (e) => {
-                          const metadata = { ...this.state.metadata }
-                          metadata.description = e.target.value
-                          this.setState({ metadata, updateDisabled: false })
-                        }
-                      }
-                    ></textarea>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Authors</label>
+                    <label>
+                      Transcode to
+                    </label>
                     {
-                      ((this.state.metadata.authors || []).concat([ "" ])).map((author, index) => {
-                        return <input
-                          key={ index }
-                          value={ author }
-                          className="form-control mt-2"
-                          placeholder="David J. Malan"
-                          onChange={ ((index, e) => {
-                            const metadata = { ...this.state.metadata }
-                            if (!Array.isArray(metadata.authors))
-                              metadata.authors = []
-
-                            metadata.authors[index] = e.target.value
-
-                            this.setState({
-                              metadata,
-                              updateDisabled: false
-                            })
-                          }).bind(this, index) }
-                        />
+                      ['240p', '360p', '720p', '1080p', '4k'].map((raster) => {
+                        return <div className="custom-control custom-checkbox" key={ raster }>
+                          <input
+                            type="checkbox"
+                            className="custom-control-input"
+                            id={raster}
+                            checked={ this.state.rasters[raster] }
+                            onChange={ this.rasterChanged.bind(this) }
+                            disabled={ !this.state.formats.mp4 } />
+                          <label
+                            className="custom-control-label"
+                            htmlFor={raster}>
+                            {raster}
+                          </label>
+                        </div>
                       })
                     }
-
-                    {
-                      (this.state.metadata.authors || []).length > 1 &&
-                          <div className="text-right">
-                            <button
-                              className="btn btn-link btn-sm"
-                              onClick={
-                                () => {
-                                  const metadata = { ...this.state.metadata }
-                                  if (Array.isArray(metadata.authors) && metadata.authors.length > 1) {
-                                    metadata.authors.pop()
-                                  }
-
-                                  this.setState({ metadata })
-                                }
-                              }
-                            >
-                              Remove
-                            </button>
-                          </div>
-                    }
                   </div>
 
                   <div className="form-group">
-                    <label>Email the following for quality assurance</label>
+                    <div className="custom-control custom-switch mt-3">
+                      <input
+                        type="checkbox"
+                        className="custom-control-input"
+                        id="twoPasses"
+                        checked={ this.state.twoPasses }
+                        onChange={ (e) => this.setState({ twoPasses: e.target.checked }) }/>
+                      <label
+                        className="custom-control-label"
+                        htmlFor="twoPasses">
+                        2 passes
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Notify</label>
                     {
                       ((this.state.emails || []).concat([ "" ])).map((email, index) => {
                         return <input
@@ -229,7 +162,7 @@ class NewPublish extends Component {
                           key={ index }
                           value={ email }
                           className="form-control mt-1"
-                          placeholder="dcoffey@cs50.harvard.edu"
+                          placeholder="isexton@cs50.harvard.edu "
                           onChange={ ((index, e) => {
                             let emails = [ ...this.state.emails ]
                             if (!Array.isArray(emails))
@@ -269,79 +202,80 @@ class NewPublish extends Component {
                 </div>
 
                 <div className="col border-left pl-5">
-                  <label>
-                    Which modes would you like to transcode to?
-                  </label>
-                  {
-                    ['240p', '360p', '720p', '1080p', '4k'].map((raster) => {
-                      return <div className="custom-control custom-checkbox" key={ raster }>
-                        <input
-                          type="checkbox"
-                          className="custom-control-input"
-                          id={raster}
-                          checked={ this.state.rasters[raster] }
-                          onChange={ this.rasterChanged.bind(this) }
-                          disabled={ !this.state.formats.mp4 } />
-                        <label
-                          className="custom-control-label"
-                          htmlFor={raster}>
-                          {raster}
-                        </label>
-                      </div>
-                    })
-                  }
 
-                  <div className="custom-control custom-switch mt-3">
-                    <input
-                      type="checkbox"
-                      className="custom-control-input"
-                      id="twoPasses"
-                      checked={ this.state.twoPasses }
-                      onChange={ (e) => this.setState({ twoPasses: e.target.checked }) }/>
-                    <label
-                      className="custom-control-label"
-                      htmlFor="twoPasses">
-                      Perform two passes <small className="text-muted">(recommended)</small>
-                    </label>
+                  <div className="form-group">
+                    <div className="custom-control custom-switch mt-3">
+                      <input
+                        type="checkbox"
+                        className="custom-control-input"
+                        id="uploadToYoutube"
+                        checked={ this.state.youtube.upload }
+                        onChange={
+                          (e) => {
+                            const youtube = { ...this.state.youtube }
+                            youtube.upload = e.target.checked
+                            this.setState({ youtube })
+                          }
+                        }
+                      />
+
+                      <label
+                        className="custom-control-label"
+                        htmlFor="uploadToYoutube">
+                        <span className="mr-2">Upload to YouTube as</span>
+                      </label>
+
+                      <select
+                        className="custom-select custom-select-sm w-auto position-relative privacy-list"
+                        defaultValue={ this.state.youtube.privacyStatus }
+                        onChange={
+                          (e) => {
+                            const youtube = { ...this.state.youtube }
+                            youtube.privacyStatus = e.target.value
+                            this.setState({ youtube })
+                          }
+                        }
+                        disabled={ !this.state.youtube.upload }
+                      >
+                        <option value="public">public</option>
+                        <option value="private">private</option>
+                        <option value="unlisted">unlisted</option>
+                      </select>
+                    </div>
                   </div>
-
-                  <div className="custom-control custom-switch mt-3">
-                    <input
-                      type="checkbox"
-                      className="custom-control-input"
-                      id="uploadToYoutube"
-                      checked={ this.state.youtube.upload }
-                      onChange={
-                        (e) => {
-                          const youtube = { ...this.state.youtube }
-                          youtube.upload = e.target.checked
-                          this.setState({ youtube })
+                  <div className={!this.state.youtube.upload && "d-none"}>
+                    <div className="form-group" >
+                      <label>Title</label>
+                      <input
+                        className="form-control"
+                        placeholder="CS50 2019 - Lecture 0 - Computational Thinking, Scratch"
+                        onChange={
+                          (e) => {
+                            const metadata = { ...this.state.metadata }
+                            metadata.title = e.target.value
+                            this.setState({ metadata, updateDisabled: false })
+                          }
                         }
-                      }
-                    />
+                        value={ this.state.metadata.title }
+                      />
+                    </div>
 
-                    <label
-                      className="custom-control-label"
-                      htmlFor="uploadToYoutube">
-                      <span className="mr-2">Upload to YouTube as</span>
-                    </label>
-
-                    <select
-                      className="custom-select custom-select-sm w-auto position-relative privacy-list"
-                      defaultValue={ this.state.youtube.privacyStatus }
-                      onChange={
-                        (e) => {
-                          const youtube = { ...this.state.youtube }
-                          youtube.privacyStatus = e.target.value
-                          this.setState({ youtube })
+                    <div className="form-group">
+                      <label>Description</label>
+                      <textarea
+                        rows="4"
+                        className="form-control"
+                        placeholder="This is a sample description."
+                        value={ this.state.metadata.description }
+                        onChange={
+                          (e) => {
+                            const metadata = { ...this.state.metadata }
+                            metadata.description = e.target.value
+                            this.setState({ metadata, updateDisabled: false })
+                          }
                         }
-                      }
-                      disabled={ !this.state.youtube.upload }
-                    >
-                      <option value="public">public</option>
-                      <option value="private">private</option>
-                      <option value="unlisted">unlisted</option>
-                    </select>
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
               </div>

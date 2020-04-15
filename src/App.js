@@ -9,7 +9,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import logo from './assets/images/logo-dark.svg'
 
 import Home from './Home'
-import Metadata from './Metadata'
 import ResizeStills from './ResizeStills'
 import GenerateThumbnails from './GenerateThumbnails'
 import NewPublish from './NewPublish'
@@ -45,13 +44,6 @@ class App extends Component {
                 </li>
 
                 <li className="nav-item">
-                  <NavLink to="/update-metadata" className="nav-link pr-0 pl-4">
-                    Update Metadata
-                    <span className="divider ml-4"></span>
-                  </NavLink>
-                </li>
-
-                <li className="nav-item">
                   <NavLink to="/resize-stills" className="nav-link pr-0 pl-4">
                     Resize Stills
                     <span className="divider ml-4"></span>
@@ -71,7 +63,6 @@ class App extends Component {
                 </li>
               </ul>
 
-              <button className="notifications-icon btn" title="Notifications"></button>
               <NavLink className="preferences-icon" to="/preferences" title="Preferences"></NavLink>
             </div>
           </nav>
@@ -79,7 +70,6 @@ class App extends Component {
             <Route exact path="/" component={ Home } />
             <Route path="/home" component={ Home } />
             <Route path="/new-publish" component={ NewPublish } />
-            <Route path="/update-metadata" component={ Metadata } />
             <Route path="/resize-stills" component={ ResizeStills } />
             <Route path="/transcode" component={ Transcode } />
             <Route path="/generate-thumbnails" component={ GenerateThumbnails } />
