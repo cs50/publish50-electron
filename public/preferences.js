@@ -4,6 +4,9 @@ const logger = require('./logger')
 const validators = require('./validators')
 
 const defaults = {
+  about: {
+    version: app.getVersion()
+  },
   general: {
     redisPort: 6379,
     imageProcessingWorkers: 64,
@@ -69,8 +72,6 @@ function setDefaults(force) {
 }
 
 setDefaults()
-
-settings.set('about.version', app.getVersion())
 
 module.exports = {
   defaults,
