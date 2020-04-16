@@ -37,19 +37,6 @@ class App extends Component {
                 </li>
 
                 <li className="nav-item">
-                  <button className="btn nav-link pr-0 pl-4" onClick={ () => ipc.send('open bucket') }>
-                    Browse CDN
-                    <span className="divider ml-4"></span>
-                  </button>
-                </li>
-
-                <li className="nav-item">
-                  <NavLink to="/resize-stills" className="nav-link pr-0 pl-4">
-                    Resize Stills
-                    <span className="divider ml-4"></span>
-                  </NavLink>
-                </li>
-                <li className="nav-item">
                   <NavLink to="/transcode" className="nav-link pr-0 pl-4">
                     Transcode
                     <span className="divider ml-4"></span>
@@ -59,7 +46,21 @@ class App extends Component {
                 <li className="nav-item">
                   <NavLink to="/generate-thumbnails" className="nav-link pr-0 pl-4">
                     Generate Thumbnails
+                    <span className="divider ml-4"></span>
                   </NavLink>
+                </li>
+
+                <li className="nav-item">
+                  <NavLink to="/resize-stills" className="nav-link pr-0 pl-4">
+                    Resize Stills
+                    <span className="divider ml-4"></span>
+                  </NavLink>
+                </li>
+
+                <li className="nav-item">
+                  <button className="btn nav-link pr-0 pl-4" onClick={ () => ipc.send('open bucket') }>
+                    Browse CDN
+                  </button>
                 </li>
               </ul>
 
