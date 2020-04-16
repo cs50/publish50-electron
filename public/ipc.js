@@ -355,8 +355,7 @@ function youtubeUpload(options) {
   const { credentials } = options
   const {
     files,
-    metadata: { title, description },
-    youtube: { privacyStatus }
+    youtube: { title, description, privacyStatus }
   } = options.videoData
 
   new Set(files).forEach((videoPath) => {
@@ -370,7 +369,7 @@ function youtubeUpload(options) {
 
     jobPromises.push(queues['youtube'].add(
       'upload',
-      { credentials, videoPath, title: title_, privacyStatus }
+      { credentials, videoPath, title: title_, description, privacyStatus }
     ))
   })
 
@@ -403,7 +402,7 @@ ipc.on('publish', async (event, data) => {
     const credentials = await googleOAuth.authenticate(youtube.scopes)
     const youtubeVideoData = { ...videoData }
     youtubeVideoData.files = uploads
-    jobPromises.push(...youtubeUpload({ credentials, youtubeVideoData}))
+    jobPromises.push(...youtubeUpload({ credentials, videoData: youtubeVideoData}))
   }
 
   jobPromises.push(...transcode(videoData))
@@ -422,16 +421,6 @@ ipc.on('publish', async (event, data) => {
   jobs.forEach((job) => {
     (jobsByQueue[job.queue.name] || (jobsByQueue[job.queue.name] = [])).push(job.id)
   })
-
-  // Object.keys(jobsByQueue).forEach((queueName) => {
-  //   queues[queueName].on('completed', (job) => {
-
-  //   })
-
-  //   queues[queueName].on('failed', (job) => {
-
-  //   })
-  // })
 })
 
 module.exports = { sendToCurrentWindow }

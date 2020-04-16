@@ -27,7 +27,7 @@ class OAuth2Client {
         }
       })
 
-      win.webContents.on('will-navigate', async (event, url_) => {
+      win.webContents.on('will-redirect', async (event, url_) => {
         const url = new URL(url_)
         const code = url.searchParams.get('code')
         const err = url.searchParams.get('error')
@@ -51,7 +51,7 @@ class OAuth2Client {
         }
       })
 
-      // // TODO use PKCE
+      // TODO use PKCE
       win.loadURL(this.client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes.join(' ')
