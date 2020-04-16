@@ -16,7 +16,7 @@ function validate(options) {
 }
 
 function validateGeneral(general={}) {
-  const { redisPort, imageProcessingWorkers, videoTranscodingWorkers } = general
+  const { redisPort } = general
   const validated = []
   if (redisPort) {
     validated.push(
@@ -29,30 +29,6 @@ function validateGeneral(general={}) {
         },
         getValid: parseInt,
         err: 'Expected redis port to be an integer between 0 and 65535 (inclusive)'
-      })
-    )
-  }
-
-  if (imageProcessingWorkers) {
-    validated.push(
-      validate({
-        name: 'general.imageProcessingWorkers',
-        value: imageProcessingWorkers,
-        isValid: isPositiveInt,
-        getValid: parseInt,
-        err: 'Expected number of image processing workers to be a positive integer'
-      })
-    )
-  }
-
-  if (videoTranscodingWorkers) {
-    validated.push(
-      validate({
-        name: 'general.videoTranscodingWorkers',
-        value: videoTranscodingWorkers,
-        isValid: isPositiveInt,
-        getValid: parseInt,
-        err: 'Expected number of video transcoding workers to be a positive integer'
       })
     )
   }

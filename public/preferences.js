@@ -9,8 +9,6 @@ const defaults = {
   },
   general: {
     redisPort: 6379,
-    imageProcessingWorkers: 64,
-    videoTranscodingWorkers: 8
   },
   awsCredentials: {
     accessKeyId:'',

@@ -97,41 +97,6 @@ class Preferences extends Component {
           <div>
             <h6 className="text-dark border-bottom pb-2">General</h6>
             <div className="pl-3 pb-3">
-              <div className="row mt-4">
-                <div className="col-5">
-                  <label htmlFor="imageProcessingWorkers">
-                    <small className="text-muted">Number of image processing workers</small>
-                  </label>
-                </div>
-                <div className="col-2">
-                  <input
-                    id="imageProcessingWorkers"
-                    className="form-control form-control-sm"
-                    type="number"
-                    min="1"
-                    onChange={ this.onChange.bind(this, 'general.imageProcessingWorkers') }
-                    value={ this.state.preferences.general.imageProcessingWorkers }
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="row mt-2">
-                <div className="col-5">
-                  <label htmlFor="videoTranscodingWorkers"><small className="text-muted">Number of video transcoding workers</small></label>
-                </div>
-                <div className="col-2">
-                  <input
-                    id="videoTranscodingWorkers"
-                    className="form-control form-control-sm"
-                    type="number"
-                    min="1"
-                    onChange={ this.onChange.bind(this, 'general.videoTranscodingWorkers') }
-                    value={ this.state.preferences.general.videoTranscodingWorkers }
-                  />
-                </div>
-              </div>
-
               <div className="row mt-2">
                 <div className="col-5">
                   <label htmlFor="redisPort"><small className="text-muted">Redis port</small></label>

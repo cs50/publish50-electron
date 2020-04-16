@@ -13,6 +13,7 @@ const queueNames = [
 const queues = {}
 
 const jobsPath = path.join(__dirname, 'jobs')
+const cpus = require('os').cpus().length
 
 queueNames.forEach((queueName) => {
   try {
@@ -29,17 +30,17 @@ queueNames.forEach((queueName) => {
 
 queues['image processing'].process(
   'resize still',
-  preferences.get('general.imageProcessingWorkers'),
+  cpus,
   path.join(jobsPath, 'resize-still.js')
 )
 
 queues['video transcoding'].process(
   'transcode',
-  preferences.get('general.videoTranscodingWorkers'),
+  cpus,
   path.join(jobsPath, '/transcode.js')
 )
 
-queues['youtube'].process('upload', 8, path.join(jobsPath, 'youtube.js'))
+queues['youtube'].process('upload', cpus, path.join(jobsPath, 'youtube.js'))
 
 module.exports = {
   queues,
