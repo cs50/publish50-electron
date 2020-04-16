@@ -49,12 +49,10 @@ class NewPublish extends Component {
       },
       twoPasses: true,
       youtube: {
+        title: '',
+        description: '',
         upload: false,
         privacyStatus: 'unlisted'
-      },
-      metadata: {
-        title: '',
-        description: ''
       },
       emails: [],
       formHidden: true,
@@ -251,12 +249,12 @@ class NewPublish extends Component {
                         placeholder="CS50 2019 - Lecture 0 - Computational Thinking, Scratch"
                         onChange={
                           (e) => {
-                            const metadata = { ...this.state.metadata }
-                            metadata.title = e.target.value
-                            this.setState({ metadata, updateDisabled: false })
+                            const youtube = { ...this.state.youtube }
+                            youtube.title = e.target.value
+                            this.setState({ youtube, updateDisabled: false })
                           }
                         }
-                        value={ this.state.metadata.title }
+                        value={ this.state.youtube.title }
                       />
                     </div>
 
@@ -266,12 +264,12 @@ class NewPublish extends Component {
                         rows="4"
                         className="form-control"
                         placeholder="This is a sample description."
-                        value={ this.state.metadata.description }
+                        value={ this.state.youtube.description }
                         onChange={
                           (e) => {
-                            const metadata = { ...this.state.metadata }
-                            metadata.description = e.target.value
-                            this.setState({ metadata, updateDisabled: false })
+                            const youtube = { ...this.state.youtube }
+                            youtube.description = e.target.value
+                            this.setState({ youtube, updateDisabled: false })
                           }
                         }
                       ></textarea>
