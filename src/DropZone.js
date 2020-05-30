@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { Button } from 'react-bootstrap';
 
 import './DropZone.css'
 import fileUploadIcon from './assets/images/file_upload.svg'
@@ -33,8 +33,6 @@ class DropZone extends React.Component {
         })
       }
     }
-
-
   }
 
   onDrag(e) {
@@ -106,14 +104,14 @@ class DropZone extends React.Component {
               </div>
 
               <div className="mt-5">
-                <button
-                  className="btn btn-primary"
+                <Button
+                  variant="primary"
                   onClick={ this.onSubmit.bind(this) }>
                   { this.props.caption }
-                </button>
-                <button className="btn btn-danger ml-2" onClick={ this.onCancel.bind(this) }>
+                </Button>
+                <Button variant="danger" className="ml-2" onClick={ this.onCancel.bind(this) }>
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
         }

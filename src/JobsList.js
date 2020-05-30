@@ -1,6 +1,7 @@
 import React from 'react'
 import './JobsList.css'
 
+import { Button, ListGroup } from 'react-bootstrap';
 import doneIcon from './assets/images/done.svg'
 import clearIcon from './assets/images/abort_all.svg'
 
@@ -12,8 +13,8 @@ class JobsList extends React.Component {
     // show them in separate tab later?
     const jobs = this.props.jobs.filter((job) => (job.failedReason || '').toLowerCase().indexOf('stalled') < 0)
     return <div>
-      <button
-        type="button"
+      <Button
+        variant="link"
         className="clear-all btn"
         title="Clear all"
         onClick={
@@ -22,20 +23,18 @@ class JobsList extends React.Component {
           }
         }>
         <img src={ clearIcon } alt="Clear all" className="clear-all-icon" />
-      </button>
-      <ul className="list-group job-list">
-
+      </Button>
+      <ListGroup className="job-list">
         {
           jobs.map((job) => {
-          const { failedReason, finishedOn, timestamp } = job
-          const aborted = failedReason && failedReason === 'ABORTED'
-          const type = aborted ? 'secondary' : (failedReason ? 'danger' : finishedOn ? 'success' : 'warning')
-          const date = failedReason ? new Date(finishedOn) : new Date(timestamp)
-          const subtext = `${aborted ? 'Aborted ' : (failedReason ? 'Failed ' : finishedOn ? 'Finished ' : 'Received ')} on ${date.toLocaleString()}`
-
-            return <li title={ failedReason } className={ `mt-1 list-group-item list-group-item-${type}` } key={ `${job.name}:${job.id}` }>
-              <button
-                type="button"
+            const { failedReason, finishedOn, timestamp } = job
+            const aborted = failedReason && failedReason === 'ABORTED'
+            const type = aborted ? 'secondary' : (failedReason ? 'danger' : finishedOn ? 'success' : 'warning')
+            const date = failedReason ? new Date(finishedOn) : new Date(timestamp)
+            const subtext = `${aborted ? 'Aborted ' : (failedReason ? 'Failed ' : finishedOn ? 'Finished ' : 'Received ')} ${date.toLocaleString()}`
+            return <ListGroup.Item className="mt-1" title={failedReason} variant={type} key={`${job.name}:${job.id}`}>
+              <Button
+                variant="link"
                 className="close"
                 aria-label="Close"
                 onClick={
@@ -45,14 +44,15 @@ class JobsList extends React.Component {
                   }
                 }>
                 <span aria-hidden="true">&times;</span>
-              </button>
+              </Button>
               <div>
                 {getJobDescription(job)}
               </div>
               <small className="text-secondary">
                 { subtext }
               </small>
-            </li>
+
+            </ListGroup.Item>
           })
         }
 
@@ -73,7 +73,7 @@ class JobsList extends React.Component {
               alt='No jobs'
             />
         }
-      </ul>
+      </ListGroup>
     </div>
   }
 }

@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {
     "aws-sdk": "^2.401.0",
-    "bootstrap": "^4.3.1",
+    "bootstrap": "^4.4.1",
     "bull": "^3.6.0",
     "electron-log": "^3.0.1",
     "electron-settings": "^3.2.0",
@@ -19,6 +19,7 @@
     "popper.js": "^1.14.7",
     "react": "^16.8.1",
     "react-autocomplete": "^1.8.1",
+    "react-bootstrap": "^1.0.0",
     "react-dom": "^16.8.1",
     "react-router-dom": "^4.3.1",
     "react-scripts": "2.1.3",
