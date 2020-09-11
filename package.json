@@ -15,7 +15,7 @@
     "google-auth-library": "^3.1.0",
     "googleapis": "^37.2.0",
     "jquery": "^3.4.0",
-    "node-fetch": "^2.3.0",
+    "node-fetch": "^2.6.1",
     "popper.js": "^1.14.7",
     "react": "^16.8.1",
     "react-autocomplete": "^1.8.1",
