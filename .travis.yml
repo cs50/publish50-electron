@@ -10,5 +10,5 @@ script: yarn dist
 deploy:
   skip_cleanup: true
   provider: script
-  script: yarn release 
-  on: master
+  script: yarn release
+  on: main
