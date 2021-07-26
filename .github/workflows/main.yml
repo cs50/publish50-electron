@@ -1,0 +1,13 @@
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '11'
+    - run: yarn
+    - run: yarn dist
+    - run: yarn release
+      if: ${{ github.ref == 'refs/heads/main' }}
