@@ -9,5 +9,7 @@ jobs:
         node-version: '11'
     - run: yarn
     - run: yarn dist
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - run: yarn release
       if: ${{ github.ref == 'refs/heads/main' }}
