@@ -45,7 +45,7 @@
   "devDependencies": {
     "concurrently": "^4.1.0",
     "electron": "^4.0.4",
-    "electron-builder": "^20.38.5",
+    "electron-builder": "^21.2.0",
     "wait-on": "^3.2.0"
   },
   "main": "public/electron.js",
