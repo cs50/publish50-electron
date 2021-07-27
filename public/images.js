@@ -11,7 +11,7 @@ const readdir = util.promisify(fs.readdir)
 
 
 async function convert(args) {
-  return execFileSync(getBin('convert'), args).toString()
+  return execFileSync('convert', args).toString()
 }
 
 function dd(n) {
