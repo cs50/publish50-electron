@@ -1,7 +1,7 @@
 on: push
 jobs:
   deploy:
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
