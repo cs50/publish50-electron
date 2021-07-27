@@ -1,4 +1,4 @@
-const { execFileSync } = require('child_process')
+const { spawnSync } = require('child_process')
 const fs = require('fs-extra')
 const path = require('path')
 const util = require('util')
@@ -11,7 +11,7 @@ const readdir = util.promisify(fs.readdir)
 
 
 async function convert(args) {
-  return execFileSync('convert', args).toString()
+  return spawnSync('convert', args).toString()
 }
 
 function dd(n) {
