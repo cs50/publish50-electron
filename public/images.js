@@ -10,8 +10,12 @@ const { rasters } = require('./constants')
 const readdir = util.promisify(fs.readdir)
 
 
-async function convert(args) {
-  return spawnSync('convert', args).toString()
+function convert(args) {
+	const proc = spawnSync('/usr/local/bin/convert', args);
+  if (proc.error) {
+    throw new Error(proc.error);
+  }
+  return proc;
 }
 
 function dd(n) {
@@ -53,7 +57,7 @@ module.exports = {
     const outFileBasename = path.join(outFolder, `${path.basename(imagePath, path.extname(imagePath))}-${raster}`)
     const outFilePNG = `${outFileBasename}.png`
     try {
-      await convert([...args, outFilePNG])
+      convert([...args, outFilePNG])
     }
     catch (err) {
       return Promise.reject(new Error(err))
@@ -72,8 +76,8 @@ module.exports = {
     for (let i = 10; i > 0; i--) {
       let convertOut
       try {
-        await convert([...args, '-depth', i.toString(), outFileJPG])
-        convertOut = await convert([outFileJPG, '-format', '%[mean]', 'info:'])
+        convert([...args, '-depth', i.toString(), outFileJPG])
+        convertOut = convert([outFileJPG, '-format', '%[mean]', 'info:']).stdout.toString()
       }
       catch (err) {
         return Promise.reject(new Error(err))
