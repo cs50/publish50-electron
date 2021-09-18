@@ -13,7 +13,7 @@
     "electron-updater": "^4.3.9",
     "fs-extra": "^7.0.1",
     "google-auth-library": "^3.1.2",
-    "googleapis": "^37.2.0",
+    "googleapis": "^87.0.0",
     "jquery": "^3.6.0",
     "node-fetch": "^2.6.2",
     "popper.js": "^1.16.1",
