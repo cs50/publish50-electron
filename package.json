@@ -46,7 +46,7 @@
     "concurrently": "^6.2.1",
     "electron": "^4.2.12",
     "electron-builder": "^21.2.0",
-    "wait-on": "^3.3.0"
+    "wait-on": "^6.0.0"
   },
   "main": "public/electron.js",
   "build": {
