@@ -90,6 +90,11 @@ function transcode(data) {
       jobPromises.push(queues['video transcoding'].add('transcode', { videoPath, format: 'mp3' }))
     }
 
+    // Transcode to m4a
+    if (formats.m4a && !/-(a|b).mov$/.test(videoPath)) {
+      jobPromises.push(queues['video transcoding'].add('transcode', { videoPath, format: 'm4a' }))
+    }
+
     // Transcode to mp4
     if (formats.mp4) {
       Object.keys(rasters)

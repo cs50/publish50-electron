@@ -93,6 +93,8 @@ async function transcode(job) {
   let outFile
   if (format === 'mp3')
     outFile = path.join(outFolder, `${basename}.mp3`)
+  else if (format === 'm4a')
+    outFile = path.join(outFolder, `${basename}.m4a`)
   else if (format === 'mp4')
     outFile = path.join(outFolder, `${basename}-${raster}.mp4`)
   else

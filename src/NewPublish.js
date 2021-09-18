@@ -39,6 +39,7 @@ class NewPublish extends Component {
       loading: true,
       formats: {
         mp3: true,
+        m4a: true,
         mp4: true
       },
       rasters: {
@@ -351,6 +352,7 @@ class NewPublish extends Component {
             <small className="text-secondary">
               <ul className="pl-3">
                 <li>MP3 will be generated automatically for masters</li>
+                <li>M4A will be generated automatically for masters</li>
                 <li>Still will be set as YouTube thumbnail automatically if selected</li>
                 <li>Stills will be resized automatically if selected</li>
                 <li>Thumbnails will be generated automatically from masters</li>
