@@ -43,7 +43,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
-    "concurrently": "^4.1.0",
+    "concurrently": "^4.1.2",
     "electron": "^4.2.12",
     "electron-builder": "^21.2.0",
     "wait-on": "^3.3.0"
