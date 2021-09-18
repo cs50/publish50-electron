@@ -14,6 +14,7 @@ class Transcode extends Component {
     return {
       formats: {
         mp3: true,
+        m4a: true,
         mp4: true
       },
       rasters: {
@@ -66,7 +67,7 @@ class Transcode extends Component {
                 <label>
                   Which formats would you like to transcode to?
                 </label>
-                { ['mp3', 'mp4'].map((format) => {
+                { ['mp3', 'm4a', 'mp4'].map((format) => {
                   return <div className="custom-control custom-checkbox" key={ format }>
                     <input
                       type="checkbox"
@@ -78,7 +79,7 @@ class Transcode extends Component {
                       className="custom-control-label"
                       htmlFor={ format }>
                       { format }
-                      { format === 'mp3' &&
+                      { (format === 'mp3' || format === 'm4a')  &&
                       <small className="text-muted"> (ignored for cameras and screens videos)</small>}
                     </label>
 

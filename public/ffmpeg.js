@@ -141,7 +141,26 @@ function ffmpeg(videoPath) {
           )
 
           child = spawn(getBin('ffmpeg'), args)
-          const kill = () => child.kill()
+          let kill = () => child.kill()
+          emitter.once("abort", kill)
+          child.stderr.on('data', (err) => logger.info(err.toString()))
+          ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
+          child.on('exit', (code, signal) => {
+            emitter.off("abort", kill)
+            emitter.emit('end', { code, signal })
+          })
+
+          return emitter
+        
+        case 'm4a':
+          args.push(
+            '-vn',
+            '-c:a', 'copy',
+            outFile
+          )
+
+          child = spawn(getBin('ffmpeg'), args)
+          kill = () => child.kill()
           emitter.once("abort", kill)
           child.stderr.on('data', (err) => logger.info(err.toString()))
           ffmpegProgress(videoPath, child, (progress) => emitter.emit('progress', progress))
