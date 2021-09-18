@@ -7,7 +7,7 @@
   "dependencies": {
     "aws-sdk": "^2.401.0",
     "bootstrap": "^4.3.1",
-    "bull": "^3.6.0",
+    "bull": "^3.29.2",
     "electron-log": "^3.0.1",
     "electron-settings": "^3.2.0",
     "electron-updater": "^4.0.6",
