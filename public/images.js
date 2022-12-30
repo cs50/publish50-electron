@@ -11,7 +11,7 @@ const readdir = util.promisify(fs.readdir)
 
 
 function convert(args) {
-	const proc = spawnSync('/usr/local/bin/convert', args);
+	const proc = spawnSync('convert', args);
   if (proc.error) {
     throw new Error(proc.error);
   }
