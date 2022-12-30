@@ -1,6 +1,6 @@
 {
   "name": "publish50",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Automates video transcoding and publishing",
   "author": "CS50",
   "private": true,
@@ -53,7 +53,7 @@
   "devDependencies": {
     "concurrently": "^6.2.1",
     "electron": "^6.1.12",
-    "electron-builder": "^22.11.7",
+    "electron-builder": "^23.0.2",
     "wait-on": "^6.0.0"
   },
   "main": "public/electron.js",
@@ -86,6 +86,7 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "CS50"
+    "owner": "cs50",
+    "releaseType": "release"
   }
 }
