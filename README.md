@@ -18,7 +18,7 @@ $ brew install imagemagick
 
 ### macOS
 
-To start publish50 for the first time after installing or updating, right-click on the publish50 icon in the Applicatoons folder and choose Open.
+To start publish50 for the first time after installing or updating, right-click on the publish50 icon in the Applications folder and choose Open.
 
 ## Development
 

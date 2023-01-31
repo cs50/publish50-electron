@@ -11,7 +11,11 @@ const readdir = util.promisify(fs.readdir)
 
 
 function convert(args) {
-	const proc = spawnSync('convert', args);
+	const proc = spawnSync('convert', args, {
+        "env": {
+            "PATH": `${process.env.PATH}:/opt/homebrew/bin`,
+        }
+    });
   if (proc.error) {
     throw new Error(proc.error);
   }
